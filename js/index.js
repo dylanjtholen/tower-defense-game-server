@@ -10,5 +10,13 @@ c.fillRect(0, 0, canvas.width, canvas.height)
 var map = new Image()
 map.src = "assets/img/map.png"
 map.onload = () => {
+
+}
+window.addEventListener('load', () => {
+    window.requestAnimationFrame(mainloop);
+});
+
+function mainloop() {
     c.drawImage(map, 0, 0, canvas.width, canvas.height)
+    window.requestAnimationFrame(mainloop)
 }
