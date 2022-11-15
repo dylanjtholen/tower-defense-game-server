@@ -4,11 +4,13 @@ const c = canvas.getContext('2d');
 canvas.width = 960;
 canvas.height = 640;
 
+let bound = canvas.getBoundingClientRect();
 let mouseDown;
 let mousex
 let mousey
 
 var enemies = []
+var wayPoints = []
 
 class Enemy {
     constructor({position={x:0, y:0}}) {
@@ -55,6 +57,7 @@ document.addEventListener('mousemove', function () {
   });
   document.addEventListener('mousedown', function () {
     mouseDown = true;
+    alert(mousex + ', ' + mousey)
   });
   document.addEventListener('mouseup', function () {
     mouseDown = false;
