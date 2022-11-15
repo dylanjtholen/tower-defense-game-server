@@ -4,6 +4,10 @@ const c = canvas.getContext('2d');
 canvas.width = 960;
 canvas.height = 640;
 
+let mouseDown;
+let mousex
+let mousey
+
 var enemies = []
 
 class Enemy {
@@ -24,6 +28,10 @@ class Enemy {
 
 var enemy1 = new Enemy({position: {x: 50, y: 250}})
 enemies.push(enemy1)
+var enemy3 = new Enemy({position: {x: 50, y: 400}})
+enemies.push(enemy3)
+var enemy2 = new Enemy({position: {x: 50, y: 100}})
+enemies.push(enemy2)
 
 var map = new Image();
 map.src = "assets/img/map.png";
@@ -34,8 +42,20 @@ window.addEventListener('load', () => {
 function mainloop() {
     c.clearRect(0, 0, canvas.width, canvas.height);
     c.drawImage(map, 0, 0, canvas.width, canvas.height);
-    for (let enemy in enemies) {
-        enemy1.update()
-    };
+    for (let i = enemies.length - 1; i >= 0; i--) {
+        let enemy = enemies[i]
+        enemy.update()
+    }
     window.requestAnimationFrame(mainloop);
 };
+
+document.addEventListener('mousemove', function () {
+    mousex = clientX - bound.left - canvas.clientLeft;
+    mousey = clientY - bound.top - canvas.clientTop;
+  });
+  document.addEventListener('mousedown', function () {
+    mouseDown = true;
+  });
+  document.addEventListener('mouseup', function () {
+    mouseDown = false;
+  });
