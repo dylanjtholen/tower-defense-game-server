@@ -60,5 +60,5 @@ document.addEventListener('mousemove', function () {
     alert(mousex + ', ' + mousey)
   });
   document.addEventListener('mouseup', function () {
-    mouseDown = false;
+    mouseDown = false
   });
