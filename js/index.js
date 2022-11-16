@@ -15,6 +15,9 @@ var towers = []
 
 var towerSize = 25
 
+function isColliding(x, y, w, h) {
+  
+}
 class Enemy {
     constructor({position={x:0, y:0}}) {
     this.position = position
