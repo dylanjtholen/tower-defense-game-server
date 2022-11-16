@@ -13,6 +13,8 @@ var enemies = []
 var waypoints = [{x: 0, y: 270}, {x:300, y:270}, {x:300, y:50}, {x:75, y:50}, {x:75, y:585}, {x:300, y:585}, {x:300, y:360}, {x:525, y:360}, {x:525, y:485}, {x:680, y:485}, {x:680, y:170}, {x:430, y:170}, {x:430, y:80}, {x:840, y:80}, {x:840, y:325}, {x:1000, y:325}]
 var towers = []
 
+var towerSize = 25
+
 class Enemy {
     constructor({position={x:0, y:0}}) {
     this.position = position
@@ -83,17 +85,20 @@ window.addEventListener('load', () => {
 function mainloop() {
   window.requestAnimationFrame(mainloop);
     c.clearRect(0, 0, canvas.width, canvas.height);
+    c.fillStyle = 'red'
     c.drawImage(map, 0, 0, canvas.width, canvas.height);
     for (let i = enemies.length - 1; i >= 0; i--) {
         let enemy = enemies[i]
         enemy.update()
     }
+    c.fillStyle = 'green'
     if (towers.length > 0) {
       for (let i = 0; i < towers.length; i++) {
-        alert(towers[i].x + ', ' + towers[i].y)
-        c.fillRect(tower[i].x, tower[i].y, 100, 100)
+        //alert(towers[i].x + ', ' + towers[i].y)
+        c.fillRect(towers[i].x, towers[i].y, towerSize * 2, towerSize * 2)
       }
-  }
+    }
+    c.fillRect(mousex - towerSize, mousey - towerSize, towerSize * 2, towerSize * 2)
 };
 
 document.addEventListener('mousemove', function () {
@@ -102,7 +107,7 @@ document.addEventListener('mousemove', function () {
   });
   document.addEventListener('mousedown', function () {
     mouseDown = true;
-    towers.push({x: mousex, y: mousey})
+    towers.push({x: mousex - towerSize, y: mousey - towerSize})
   });
   document.addEventListener('mouseup', function () {
     mouseDown = false
