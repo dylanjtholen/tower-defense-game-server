@@ -12,11 +12,12 @@ let mousey
 var enemies = []
 var waypoints = [{x: 0, y: 270}, {x:300, y:270}, {x:300, y:50}, {x:75, y:50}, {x:75, y:585}, {x:300, y:585}, {x:300, y:360}, {x:525, y:360}, {x:525, y:485}, {x:680, y:485}, {x:680, y:170}, {x:430, y:170}, {x:430, y:80}, {x:840, y:80}, {x:840, y:325}, {x:1000, y:325}]
 var towers = []
+var collisionRectangles = [{x:0, y:310, w:350, h:80}]
 
 var towerSize = 25
 
 function isColliding(x, y, w, h, x2, y2, w2, h2) {
-  if (((x > x2) && (x < (x2 + w2)) || (((x + w) > x2) && ((x + w) < (x2 + w2)))) && ((y > y2) && (y < (y2 + h2)) || (((y + h) > y2) && ((y + h) < (y2 + h2))))) {
+  if (((x >= x2) && (x <= (x2 + w2))  || (((x + w) >= x2) && ((x + w) <= (x2 + w2)))) && ((y >= y2) && (y <= (y2 + h2)) || (((y + h) >= y2) && ((y + h) <= (y2 + h2))))) {
     return true
   } else {
     return false
@@ -25,8 +26,13 @@ function isColliding(x, y, w, h, x2, y2, w2, h2) {
 
 function validPlacement(x, y, w, h){
   let valid = true
-  for (let tower in towers) {
-    if (isColliding(tower.x, tower.y, towerSize * 2, towerSize * 2, x, y, w, h)) {
+  for (let i in towers) {
+    if (isColliding(towers[i].x, towers[i].y, towerSize * 2, towerSize * 2, x, y, w, h)) {
+      valid = false
+    }
+  }
+  for (let i in collisionRectangles) {
+    if (isColliding(collisionRectangles[i].x, collisionRectangles[i].y, collisionRectangles[i].w, collisionRectangles[i].h, x, y, w, h)) {
       valid = false
     }
   }
@@ -100,6 +106,7 @@ enemies.push(enemy2)
 var map = new Image();
 map.src = "assets/img/map.png";
 window.addEventListener('load', () => {
+  c.drawImage(map, 0, 0, canvas.width, canvas.height)
     window.requestAnimationFrame(mainloop);
 });
 
@@ -115,12 +122,11 @@ function mainloop() {
     c.fillStyle = 'green'
     if (towers.length > 0) {
       for (let i = 0; i < towers.length; i++) {
-        //alert(towers[i].x + ', ' + towers[i].y)
         c.fillRect(towers[i].x, towers[i].y, towerSize * 2, towerSize * 2)
       }
     }
-    if (validPlacement(mousex - towerSize, mousey - towerSize, towerSize * 2, towerSize * 2) = false) {
-      alert('gdhf')
+    if (!validPlacement(mousex - towerSize, mousey - towerSize, towerSize * 2, towerSize * 2)) {
+      c.fillStyle = 'red'
     }
     c.fillRect(mousex - towerSize, mousey - towerSize, towerSize * 2, towerSize * 2)
 };
@@ -131,7 +137,11 @@ document.addEventListener('mousemove', function () {
   });
   document.addEventListener('mousedown', function () {
     mouseDown = true;
+    //alert(mousex + ", " + mousey)
+    c.fillRect(mousex, mousey, 1, 1)
+    if (validPlacement(mousex - towerSize, mousey - towerSize, towerSize * 2, towerSize * 2)) {
     towers.push({x: mousex - towerSize, y: mousey - towerSize})
+    }
   });
   document.addEventListener('mouseup', function () {
     mouseDown = false
