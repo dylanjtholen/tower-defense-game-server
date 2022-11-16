@@ -88,6 +88,9 @@ function mainloop() {
         let enemy = enemies[i]
         enemy.update()
     }
+  for (let i = 0; i < towers.length; i++) {
+      c.fillRect(tower[i].x, tower[i].y, 100, 100)
+  }
 };
 
 document.addEventListener('mousemove', function () {
