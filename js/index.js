@@ -88,8 +88,11 @@ function mainloop() {
         let enemy = enemies[i]
         enemy.update()
     }
-  for (let i = 0; i < towers.length; i++) {
-      c.fillRect(tower[i].x, tower[i].y, 100, 100)
+    if (towers.length > 0) {
+      for (let i = 0; i < towers.length; i++) {
+        alert(towers[i].x + ', ' + towers[i].y)
+        c.fillRect(tower[i].x, tower[i].y, 100, 100)
+      }
   }
 };
 
