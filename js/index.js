@@ -11,25 +11,7 @@ let mousey
 
 var enemies = []
 var waypoints = [{x: 0, y: 270}, {x:300, y:270}, {x:300, y:50}, {x:75, y:50}, {x:75, y:585}, {x:300, y:585}, {x:300, y:360}, {x:525, y:360}, {x:525, y:485}, {x:680, y:485}, {x:680, y:170}, {x:430, y:170}, {x:430, y:80}, {x:840, y:80}, {x:840, y:325}, {x:1000, y:325}]
-
-function closestpointonline(lx1, ly1, lx2, ly2, x0, y0){ 
-  let A1 = ly2 - ly1; 
-  let B1 = lx1 - lx2; 
-  let C1 = (ly2 - ly1)*lx1 + (lx1 - lx2)*ly1; 
-  let C2 = -B1*x0 + A1*y0; 
-  let det = A1*A1 - -B1*B1; 
-  let cx = 0; 
-  let cy = 0; 
-  if(det != 0){ 
-        cx = (float)((A1*C1 - B1*C2)/det); 
-        cy = (float)((A1*C2 - -B1*C1)/det); 
-  }else{ 
-        cx = x0; 
-        cy = y0; 
-  } 
-  return {cx, cy}]; 
-}
-
+var towers = []
 
 class Enemy {
     constructor({position={x:0, y:0}}) {
@@ -114,6 +96,7 @@ document.addEventListener('mousemove', function () {
   });
   document.addEventListener('mousedown', function () {
     mouseDown = true;
+    towers.push({x: mousex, y: mousey})
   });
   document.addEventListener('mouseup', function () {
     mouseDown = false
