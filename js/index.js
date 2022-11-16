@@ -15,8 +15,26 @@ var towers = []
 
 var towerSize = 25
 
-function isColliding(x, y, w, h) {
-  
+function isColliding(x, y, w, h, x2, y2, w2, h2) {
+  if (((x > x2) && (x < (x2 + w2)) || (((x + w) > x2) && ((x + w) < (x2 + w2)))) && ((y > y2) && (y < (y2 + h2)) || (((y + h) > y2) && ((y + h) < (y2 + h2))))) {
+    return true
+  } else {
+    return false
+  }
+}
+
+function validPlacement(x, y, w, h){
+  let valid = true
+  for (let tower in towers) {
+    if (isColliding(tower.x, tower.y, towerSize * 2, towerSize * 2, x, y, w, h)) {
+      valid = false
+    }
+  }
+  if (valid) {
+    return true
+  } else {
+    return false
+  }
 }
 class Enemy {
     constructor({position={x:0, y:0}}) {
@@ -100,6 +118,9 @@ function mainloop() {
         //alert(towers[i].x + ', ' + towers[i].y)
         c.fillRect(towers[i].x, towers[i].y, towerSize * 2, towerSize * 2)
       }
+    }
+    if (validPlacement(mousex - towerSize, mousey - towerSize, towerSize * 2, towerSize * 2) = false) {
+      alert('gdhf')
     }
     c.fillRect(mousex - towerSize, mousey - towerSize, towerSize * 2, towerSize * 2)
 };
