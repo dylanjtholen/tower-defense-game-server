@@ -119,7 +119,7 @@ class Enemy {
         Math.abs(this.velocity.y)
     ) {
       if (this.waypointIndex == waypoints.length - 1) {
-        enemies.splice(0, 1)
+        return true
       } else {
         this.waypointIndex++
       }
@@ -132,6 +132,7 @@ class tower {
     this.position = position
     this.width = towerSize * 2
     this.height = towerSize * 2
+    this.projectileCooldown = 30
     this.center = {
         x: this.position.x + this.width / 2,
         y: this.position.y + this.height / 2
@@ -143,13 +144,18 @@ class tower {
     }
     update() {
     this.draw()
-
     
+    if (this.projectileCooldown == 0) {
+    this.projectileCooldown += 30
+    projectiles.push(new projectile({position: {x:this.position.x, y:this.position.y}, endpoint: {x:0, y:0}}))
+    } else {
+      this.projectileCooldown -= 2
+    }
     }
 }
 
 class projectile {
-  constructor({position={x:0, y:0}}, {endpoint={x:0, y:0}}) {
+  constructor({position={x:0, y:0}, endpoint={x:0, y:0}}) {
     this.position = position
     this.width = towerSize * 2
     this.height = towerSize * 2
@@ -158,6 +164,7 @@ class projectile {
         x: this.position.x + this.width / 2,
         y: this.position.y + this.height / 2
     }
+    this.endpoint = endpoint
     this.radius = 50
     this.health = 100
     this.velocity = {
@@ -221,7 +228,6 @@ function mainloop() {
           enemies.splice(i, 1)
         }
     }
-    c.fillStyle = 'lime'
     if (towers.length > 0) {
       for (let i = 0; i < towers.length; i++) {
         let tower = towers[i]
@@ -230,12 +236,13 @@ function mainloop() {
     }
     if (projectiles.length > 0) {
       for (let i = 0; i < projectiles.length; i++) {
-        let proj = projectiles[i]
-        if (proj.update()) {
+        let projectile = projectiles[i]
+        if (projectile.update()) {
           projectiles.splice(i, 1)
         }
       }
     }
+    c.fillStyle = 'lime'
     if (!validPlacement(mousex - towerSize, mousey - towerSize, towerSize * 2, towerSize * 2)) {
       c.fillStyle = 'red'
     }
