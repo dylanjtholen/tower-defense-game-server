@@ -12,9 +12,21 @@ let mousey
 var enemies = []
 var waypoints = [{x: 0, y: 270}, {x:300, y:270}, {x:300, y:50}, {x:75, y:50}, {x:75, y:585}, {x:300, y:585}, {x:300, y:360}, {x:525, y:360}, {x:525, y:485}, {x:680, y:485}, {x:680, y:170}, {x:430, y:170}, {x:430, y:80}, {x:840, y:80}, {x:840, y:325}, {x:1000, y:325}]
 var towers = []
-var collisionRectangles = [{x:0, y:310, w:350, h:80}]
+var collisionRectangles = [{x:0, y:230, w:350, h:80}, {x: 255, y: 10, w: 100, h: 300}, {x: 35, y: 5, w: 315, h: 85}, {x: 30, y: 5, w: 95, h: 625}, {x: 30, y: 550, w: 325, h: 85}, {x: 255, y: 325, w: 100, h: 305}, {x: 260, y: 325, w: 315, h: 85}, {x: 475, y: 320, w: 105, h: 217}, {x: 475, y: 455, w: 260, h: 80, {x: 635, y: 135, w: 100, h: 405}]
 
 var towerSize = 25
+
+function findPos(obj) {
+  var curleft = 0, curtop = 0;
+  if (obj.offsetParent) {
+      do {
+          curleft += obj.offsetLeft;
+          curtop += obj.offsetTop;
+      } while (obj = obj.offsetParent);
+      return { x: curleft, y: curtop };
+  }
+  return undefined;
+}
 
 function isColliding(x, y, w, h, x2, y2, w2, h2) {
   if (((x >= x2) && (x <= (x2 + w2))  || (((x + w) >= x2) && ((x + w) <= (x2 + w2)))) && ((y >= y2) && (y <= (y2 + h2)) || (((y + h) >= y2) && ((y + h) <= (y2 + h2))))) {
@@ -32,7 +44,7 @@ function validPlacement(x, y, w, h){
     }
   }
   for (let i in collisionRectangles) {
-    if (isColliding(collisionRectangles[i].x, collisionRectangles[i].y, collisionRectangles[i].w, collisionRectangles[i].h, x, y, w, h)) {
+    if (isColliding(x, y, w, h, collisionRectangles[i].x, collisionRectangles[i].y, collisionRectangles[i].w, collisionRectangles[i].h)) {
       valid = false
     }
   }
@@ -110,6 +122,9 @@ window.addEventListener('load', () => {
     window.requestAnimationFrame(mainloop);
 });
 
+var tempx = 0
+var tempy = 0
+
 function mainloop() {
   window.requestAnimationFrame(mainloop);
     c.clearRect(0, 0, canvas.width, canvas.height);
@@ -129,11 +144,13 @@ function mainloop() {
       c.fillStyle = 'red'
     }
     c.fillRect(mousex - towerSize, mousey - towerSize, towerSize * 2, towerSize * 2)
+    c.strokeRect(mousex, mousey, tempx - mousex, tempy - mousey)
 };
 
 document.addEventListener('mousemove', function () {
-    mousex = event.clientX - bound.left - canvas.clientLeft - 172;
-    mousey = event.clientY - bound.top - canvas.clientTop - 3;
+    let pos = findPos(canvas)
+    mousex = event.pageX - pos.x;
+    mousey = event.pageY - pos.y;
   });
   document.addEventListener('mousedown', function () {
     mouseDown = true;
@@ -141,6 +158,14 @@ document.addEventListener('mousemove', function () {
     c.fillRect(mousex, mousey, 1, 1)
     if (validPlacement(mousex - towerSize, mousey - towerSize, towerSize * 2, towerSize * 2)) {
     towers.push({x: mousex - towerSize, y: mousey - towerSize})
+    }
+    if (tempx == 0 && tempy == 0) {
+      tempx = mousex
+      tempy = mousey
+    } else {
+      alert(mousex + ", " + mousey + ", " + (tempx - mousex) + ", " + (tempy - mousey))
+      tempx = 0
+      tempy = 0
     }
   });
   document.addEventListener('mouseup', function () {
