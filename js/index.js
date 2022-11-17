@@ -12,9 +12,13 @@ let mousey
 var enemies = []
 var waypoints = [{x: 0, y: 270}, {x:300, y:270}, {x:300, y:50}, {x:75, y:50}, {x:75, y:585}, {x:300, y:585}, {x:300, y:360}, {x:525, y:360}, {x:525, y:485}, {x:680, y:485}, {x:680, y:170}, {x:430, y:170}, {x:430, y:80}, {x:840, y:80}, {x:840, y:325}, {x:1000, y:325}]
 var towers = []
-var collisionRectangles = [{x:0, y:230, w:350, h:80}, {x: 255, y: 10, w: 100, h: 300}, {x: 35, y: 5, w: 315, h: 85}, {x: 30, y: 5, w: 95, h: 625}, {x: 30, y: 550, w: 325, h: 85}, {x: 255, y: 325, w: 100, h: 305}, {x: 260, y: 325, w: 315, h: 85}, {x: 475, y: 320, w: 105, h: 217}, {x: 475, y: 455, w: 260, h: 80}, {x: 635, y: 135, w: 100, h: 405}, {x: 385, y: 135, w: 350, h: 85}, {x: 385, y: 35, w: 95, h: 180}, {x: 385, y: 40, w: 510, h: 85}, {x: 800, y: 40, w: 95, h: 340}, {x: 800, y: 290, w: 160, h: 85}]
+var collisionRectangles = [{x:0, y:230, w:350, h:80}, {x: 255, y: 10, w: 100, h: 300}, {x: 35, y: 5, w: 315, h: 85}, {x: 30, y: 5, w: 95, h: 625}, {x: 30, y: 550, w: 325, h: 85}, {x: 255, y: 325, w: 100, h: 305}, {x: 260, y: 330, w: 315, h: 80}, {x: 475, y: 330, w: 105, h: 207}, {x: 475, y: 455, w: 260, h: 80}, {x: 635, y: 135, w: 100, h: 405}, {x: 385, y: 135, w: 350, h: 85}, {x: 385, y: 35, w: 95, h: 180}, {x: 385, y: 40, w: 510, h: 85}, {x: 800, y: 40, w: 95, h: 340}, {x: 800, y: 290, w: 160, h: 85}]
 
 var towerSize = 25
+
+var enemiesCooldown
+
+/*----------FUNCTION DECLARATION----------*/
 
 function findPos(obj) {
   var curleft = 0, curtop = 0;
@@ -54,6 +58,17 @@ function validPlacement(x, y, w, h){
     return false
   }
 }
+
+function createEnemies(health) {
+  if (enemies.length < 1000 && enemiesCooldown == 0) {
+    enemies.push(new Enemy({position: {x: -100, y: 270}}))
+    enemiesCooldown += 0
+  } else if (enemiesCooldown != 0) {
+    enemiesCooldown -= 1
+  }
+}
+
+/*----------CLASSES----------*/
 class Enemy {
     constructor({position={x:0, y:0}}) {
     this.position = position
@@ -100,27 +115,26 @@ class Enemy {
       Math.abs(Math.round(this.center.x) - Math.round(waypoint.x)) <
         Math.abs(this.velocity.x) &&
       Math.abs(Math.round(this.center.y) - Math.round(waypoint.y)) <
-        Math.abs(this.velocity.y) &&
-      this.waypointIndex < waypoints.length - 1
+        Math.abs(this.velocity.y)
     ) {
-      this.waypointIndex++
-    }
+      if (this.waypointIndex == waypoints.length - 1) {
+        enemies.splice(0, 1)
+      } else {
+        this.waypointIndex++
+      }
+    } 
     }
 }
-
-var enemy1 = new Enemy({position: {x: -50, y: 270}})
-enemies.push(enemy1)
-var enemy3 = new Enemy({position: {x: -150, y: 270}})
-enemies.push(enemy3)
-var enemy2 = new Enemy({position: {x: -250, y: 270}})
-enemies.push(enemy2)
 
 var map = new Image();
 map.src = "assets/img/map.png";
 window.addEventListener('load', () => {
+  enemiesCooldown = 30
   c.drawImage(map, 0, 0, canvas.width, canvas.height)
     window.requestAnimationFrame(mainloop);
 });
+
+/*----------MAIN LOOP----------*/
 
 function mainloop() {
   window.requestAnimationFrame(mainloop);
@@ -140,8 +154,11 @@ function mainloop() {
     if (!validPlacement(mousex - towerSize, mousey - towerSize, towerSize * 2, towerSize * 2)) {
       c.fillStyle = 'red'
     }
+    createEnemies()
     c.fillRect(mousex - towerSize, mousey - towerSize, towerSize * 2, towerSize * 2)
 };
+
+/*----------MOUSE EVENTS----------*/
 
 document.addEventListener('mousemove', function () {
     let pos = findPos(canvas)
