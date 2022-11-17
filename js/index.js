@@ -127,7 +127,7 @@ class Enemy {
 }
 
 var map = new Image();
-map.src = "assets/img/map.png";
+map.src = "img/map.png";
 window.addEventListener('load', () => {
   enemiesCooldown = 30
   c.drawImage(map, 0, 0, canvas.width, canvas.height)
