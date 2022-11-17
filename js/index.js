@@ -43,7 +43,7 @@ function isColliding(x, y, w, h, x2, y2, w2, h2) {
 function validPlacement(x, y, w, h){
   let valid = true
   for (let i in towers) {
-    if (isColliding(towers[i].x, towers[i].y, towerSize * 2, towerSize * 2, x, y, w, h)) {
+    if (isColliding(towers[i].position.x - towerSize, towers[i].position.y - towerSize, towerSize * 2, towerSize * 2, x, y, w, h)) {
       valid = false
     }
   }
@@ -62,7 +62,7 @@ function validPlacement(x, y, w, h){
 function createEnemies(health) {
   if (enemies.length < 1000 && enemiesCooldown == 0) {
     enemies.push(new Enemy({position: {x: -100, y: 270}}))
-    enemiesCooldown += 0
+    enemiesCooldown += 50
   } else if (enemiesCooldown != 0) {
     enemiesCooldown -= 1
   }
@@ -126,6 +126,79 @@ class Enemy {
     }
 }
 
+class tower {
+  constructor({position={x:0, y:0}}) {
+    this.position = position
+    this.width = towerSize * 2
+    this.height = towerSize * 2
+    this.center = {
+        x: this.position.x + this.width / 2,
+        y: this.position.y + this.height / 2
+    }
+    }
+    draw() {
+        c.fillStyle = 'lime'
+        c.fillRect(this.center.x - this.height, this.center.y - this.width, this.width, this.height)
+    }
+    update() {
+    this.draw()
+
+    
+    }
+}
+
+class projectile {
+  constructor({position={x:0, y:0}}, {endpoint={x:0, y:0}}) {
+    this.position = position
+    this.width = towerSize * 2
+    this.height = towerSize * 2
+    this.waypointIndex = 0
+    this.center = {
+        x: this.position.x + this.width / 2,
+        y: this.position.y + this.height / 2
+    }
+    this.radius = 50
+    this.health = 100
+    this.velocity = {
+        x: 0,
+        y: 0
+    }
+    }
+    draw() {
+        c.fillStyle = 'orange'
+        c.fillRect(this.center.x - this.height, this.center.y - this.width, this.width, this.height)
+    }
+    update() {
+    this.draw()
+
+    const yDistance = this.endpoint.y - this.center.y
+    const xDistance = this.endpoint.x - this.center.x
+    const angle = Math.atan2(yDistance, xDistance)
+
+    const speed = 3
+
+    this.velocity.x = Math.cos(angle) * speed
+    this.velocity.y = Math.sin(angle) * speed
+
+    this.position.x += this.velocity.x
+    this.position.y += this.velocity.y
+
+    this.center = {
+      x: this.position.x + this.width / 2,
+      y: this.position.y + this.height / 2
+    }
+
+    if (
+      Math.abs(Math.round(this.center.x) - Math.round(this.endpoint.x)) <
+        Math.abs(this.velocity.x) &&
+      Math.abs(Math.round(this.center.y) - Math.round(this.endpoint.y)) <
+        Math.abs(this.velocity.y)
+    ) {
+
+    }
+  }
+}
+
 var map = new Image();
 map.src = "img/map.png";
 window.addEventListener('load', () => {
@@ -145,10 +218,11 @@ function mainloop() {
         let enemy = enemies[i]
         enemy.update()
     }
-    c.fillStyle = 'green'
+    c.fillStyle = 'lime'
     if (towers.length > 0) {
       for (let i = 0; i < towers.length; i++) {
-        c.fillRect(towers[i].x, towers[i].y, towerSize * 2, towerSize * 2)
+        let tower = towers[i]
+        tower.update()
       }
     }
     if (!validPlacement(mousex - towerSize, mousey - towerSize, towerSize * 2, towerSize * 2)) {
@@ -170,7 +244,7 @@ document.addEventListener('mousemove', function () {
     //alert(mousex + ", " + mousey)
     c.fillRect(mousex, mousey, 1, 1)
     if (validPlacement(mousex - towerSize, mousey - towerSize, towerSize * 2, towerSize * 2)) {
-    towers.push({x: mousex - towerSize, y: mousey - towerSize})
+    towers.push(new tower({position: {x: mousex, y: mousey}}))
     }
   });
   document.addEventListener('mouseup', function () {
