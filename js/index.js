@@ -13,6 +13,7 @@ var enemies = []
 var waypoints = [{x: 0, y: 270}, {x:300, y:270}, {x:300, y:50}, {x:75, y:50}, {x:75, y:585}, {x:300, y:585}, {x:300, y:360}, {x:525, y:360}, {x:525, y:485}, {x:680, y:485}, {x:680, y:170}, {x:430, y:170}, {x:430, y:80}, {x:840, y:80}, {x:840, y:325}, {x:1000, y:325}]
 var towers = []
 var collisionRectangles = [{x:0, y:230, w:350, h:80}, {x: 255, y: 10, w: 100, h: 300}, {x: 35, y: 5, w: 315, h: 85}, {x: 30, y: 5, w: 95, h: 625}, {x: 30, y: 550, w: 325, h: 85}, {x: 255, y: 325, w: 100, h: 305}, {x: 260, y: 330, w: 315, h: 80}, {x: 475, y: 330, w: 105, h: 207}, {x: 475, y: 455, w: 260, h: 80}, {x: 635, y: 135, w: 100, h: 405}, {x: 385, y: 135, w: 350, h: 85}, {x: 385, y: 35, w: 95, h: 180}, {x: 385, y: 40, w: 510, h: 85}, {x: 800, y: 40, w: 95, h: 340}, {x: 800, y: 290, w: 160, h: 85}]
+var projectiles= []
 
 var towerSize = 25
 
@@ -194,7 +195,7 @@ class projectile {
       Math.abs(Math.round(this.center.y) - Math.round(this.endpoint.y)) <
         Math.abs(this.velocity.y)
     ) {
-
+      return true
     }
   }
 }
@@ -216,13 +217,23 @@ function mainloop() {
     c.drawImage(map, 0, 0, canvas.width, canvas.height);
     for (let i = enemies.length - 1; i >= 0; i--) {
         let enemy = enemies[i]
-        enemy.update()
+        if (enemy.update()) {
+          enemies.splice(i, 1)
+        }
     }
     c.fillStyle = 'lime'
     if (towers.length > 0) {
       for (let i = 0; i < towers.length; i++) {
         let tower = towers[i]
         tower.update()
+      }
+    }
+    if (projectiles.length > 0) {
+      for (let i = 0; i < projectiles.length; i++) {
+        let proj = projectiles[i]
+        if (proj.update()) {
+          projectiles.splice(i, 1)
+        }
       }
     }
     if (!validPlacement(mousex - towerSize, mousey - towerSize, towerSize * 2, towerSize * 2)) {
