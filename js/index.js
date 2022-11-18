@@ -5,9 +5,9 @@ canvas.width = 960;
 canvas.height = 640;
 
 let bound = canvas.getBoundingClientRect();
-let mouseDown;
-let mousex
-let mousey
+var mouseDown;
+var mousex
+var mousey
 
 var enemies = []
 var waypoints = [{x: 0, y: 270}, {x:300, y:270}, {x:300, y:50}, {x:75, y:50}, {x:75, y:585}, {x:300, y:585}, {x:300, y:360}, {x:525, y:360}, {x:525, y:485}, {x:680, y:485}, {x:680, y:170}, {x:430, y:170}, {x:430, y:80}, {x:840, y:80}, {x:840, y:325}, {x:1000, y:325}]
@@ -52,6 +52,9 @@ function validPlacement(x, y, w, h){
     if (isColliding(x, y, w, h, collisionRectangles[i].x, collisionRectangles[i].y, collisionRectangles[i].w, collisionRectangles[i].h)) {
       valid = false
     }
+  }
+  if (false) {
+    valid = false
   }
   if (valid) {
     return true
@@ -132,7 +135,7 @@ class tower {
     this.position = position
     this.width = towerSize * 2
     this.height = towerSize * 2
-    this.projectileCooldown = 30
+    this.projectileCooldown = 120
     this.center = {
         x: this.position.x + this.width / 2,
         y: this.position.y + this.height / 2
@@ -146,8 +149,8 @@ class tower {
     this.draw()
     
     if (this.projectileCooldown == 0) {
-    this.projectileCooldown += 30
-    projectiles.push(new projectile({position: {x:this.position.x, y:this.position.y}, endpoint: {x:0, y:0}}))
+    this.projectileCooldown += 120
+    projectiles.push(new projectile({position: {x:this.position.x, y:this.position.y}, endpoint: {x: enemies[0].position.x, y:enemies[0].position.y}}))
     } else {
       this.projectileCooldown -= 2
     }
@@ -157,9 +160,10 @@ class tower {
 class projectile {
   constructor({position={x:0, y:0}, endpoint={x:0, y:0}}) {
     this.position = position
-    this.width = towerSize * 2
-    this.height = towerSize * 2
+    this.width = towerSize / 2
+    this.height = towerSize / 2
     this.waypointIndex = 0
+    this.distanceTravelled = 0
     this.center = {
         x: this.position.x + this.width / 2,
         y: this.position.y + this.height / 2
@@ -171,6 +175,9 @@ class projectile {
         x: 0,
         y: 0
     }
+    this.yDistance = this.endpoint.y - this.center.y
+    this.xDistance = this.endpoint.x - this.center.x
+    this.angle = Math.atan2(this.yDistance, this.xDistance)
     }
     draw() {
         c.fillStyle = 'orange'
@@ -179,28 +186,28 @@ class projectile {
     update() {
     this.draw()
 
-    const yDistance = this.endpoint.y - this.center.y
-    const xDistance = this.endpoint.x - this.center.x
-    const angle = Math.atan2(yDistance, xDistance)
+    const speed = 20
 
-    const speed = 3
-
-    this.velocity.x = Math.cos(angle) * speed
-    this.velocity.y = Math.sin(angle) * speed
-
+    this.velocity.x = Math.cos(this.angle) * speed
+    this.velocity.y = Math.sin(this.angle) * speed
+    
     this.position.x += this.velocity.x
     this.position.y += this.velocity.y
-
+    this.distanceTravelled += speed
     this.center = {
       x: this.position.x + this.width / 2,
       y: this.position.y + this.height / 2
     }
 
+    for (let i = 0; i < enemies.length; i++) {
+    let enemy = enemies[i]
+    if (isColliding(this.position.x, this.position.y, this.width, this.height, enemy.position.x, enemy.position.y, enemy.width, enemy.height)) {
+      enemies.splice(i, 1);
+      return true
+    }
+    }
     if (
-      Math.abs(Math.round(this.center.x) - Math.round(this.endpoint.x)) <
-        Math.abs(this.velocity.x) &&
-      Math.abs(Math.round(this.center.y) - Math.round(this.endpoint.y)) <
-        Math.abs(this.velocity.y)
+      this.distanceTravelled > 500
     ) {
       return true
     }
@@ -252,12 +259,12 @@ function mainloop() {
 
 /*----------MOUSE EVENTS----------*/
 
-document.addEventListener('mousemove', function () {
+canvas.addEventListener('mousemove', function () {
     let pos = findPos(canvas)
     mousex = event.pageX - pos.x;
     mousey = event.pageY - pos.y;
   });
-  document.addEventListener('mousedown', function () {
+  canvas.addEventListener('mousedown', function () {
     mouseDown = true;
     //alert(mousex + ", " + mousey)
     c.fillRect(mousex, mousey, 1, 1)
@@ -265,6 +272,6 @@ document.addEventListener('mousemove', function () {
     towers.push(new tower({position: {x: mousex, y: mousey}}))
     }
   });
-  document.addEventListener('mouseup', function () {
+  canvas.addEventListener('mouseup', function () {
     mouseDown = false
   });
