@@ -17,6 +17,9 @@ var projectiles= []
 
 var towerSize = 25
 
+var lives = 100
+var money = 10
+
 var enemiesCooldown
 
 /*----------FUNCTION DECLARATION----------*/
@@ -64,7 +67,7 @@ function validPlacement(x, y, w, h){
 }
 
 function createEnemies(health) {
-  if (enemies.length < 1000 && enemiesCooldown == 0) {
+  if (enemies.length < 1000 && enemiesCooldown <= 0) {
     enemies.push(new Enemy({position: {x: -100, y: 270}}))
     enemiesCooldown += 50
   } else if (enemiesCooldown != 0) {
@@ -122,6 +125,7 @@ class Enemy {
         Math.abs(this.velocity.y)
     ) {
       if (this.waypointIndex == waypoints.length - 1) {
+        lives -= 1
         return true
       } else {
         this.waypointIndex++
@@ -135,7 +139,7 @@ class tower {
     this.position = position
     this.width = towerSize * 2
     this.height = towerSize * 2
-    this.projectileCooldown = 120
+    this.projectileCooldown = 60
     this.center = {
         x: this.position.x + this.width / 2,
         y: this.position.y + this.height / 2
@@ -148,11 +152,11 @@ class tower {
     update() {
     this.draw()
     
-    if (this.projectileCooldown == 0) {
-    this.projectileCooldown += 120
+    if (this.projectileCooldown <= 0 && enemies.length > 0) {
+    this.projectileCooldown += 60
     projectiles.push(new projectile({position: {x:this.position.x, y:this.position.y}, endpoint: {x: enemies[0].position.x, y:enemies[0].position.y}}))
     } else {
-      this.projectileCooldown -= 2
+      this.projectileCooldown -= 1
     }
     }
 }
@@ -203,6 +207,7 @@ class projectile {
     let enemy = enemies[i]
     if (isColliding(this.position.x, this.position.y, this.width, this.height, enemy.position.x, enemy.position.y, enemy.width, enemy.height)) {
       enemies.splice(i, 1);
+      money++
       return true
     }
     }
@@ -225,7 +230,7 @@ window.addEventListener('load', () => {
 /*----------MAIN LOOP----------*/
 
 function mainloop() {
-  window.requestAnimationFrame(mainloop);
+  requestAnimationFrame(mainloop);
     c.clearRect(0, 0, canvas.width, canvas.height);
     c.fillStyle = 'red'
     c.drawImage(map, 0, 0, canvas.width, canvas.height);
@@ -255,6 +260,10 @@ function mainloop() {
     }
     createEnemies()
     c.fillRect(mousex - towerSize, mousey - towerSize, towerSize * 2, towerSize * 2)
+    c.fillStyle = 'white'
+    c.font = '30px sans-serif'
+    c.fillText("Money: " + money, 0, 30)
+    c.fillText("Lives: " + lives, 0, 70)
 };
 
 /*----------MOUSE EVENTS----------*/
@@ -266,10 +275,10 @@ canvas.addEventListener('mousemove', function () {
   });
   canvas.addEventListener('mousedown', function () {
     mouseDown = true;
-    //alert(mousex + ", " + mousey)
     c.fillRect(mousex, mousey, 1, 1)
-    if (validPlacement(mousex - towerSize, mousey - towerSize, towerSize * 2, towerSize * 2)) {
-    towers.push(new tower({position: {x: mousex, y: mousey}}))
+    if (validPlacement(mousex - towerSize, mousey - towerSize, towerSize * 2, towerSize * 2) && money > 9) {
+      money -= 10
+      towers.push(new tower({position: {x: mousex, y: mousey}}))
     }
   });
   canvas.addEventListener('mouseup', function () {
