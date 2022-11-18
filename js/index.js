@@ -13,7 +13,8 @@ var enemies = []
 var waypoints = [{x: 0, y: 270}, {x:300, y:270}, {x:300, y:50}, {x:75, y:50}, {x:75, y:585}, {x:300, y:585}, {x:300, y:360}, {x:525, y:360}, {x:525, y:485}, {x:680, y:485}, {x:680, y:170}, {x:430, y:170}, {x:430, y:80}, {x:840, y:80}, {x:840, y:325}, {x:1000, y:325}]
 var towers = []
 var collisionRectangles = [{x:0, y:230, w:350, h:80}, {x: 255, y: 10, w: 100, h: 300}, {x: 35, y: 5, w: 315, h: 85}, {x: 30, y: 5, w: 95, h: 625}, {x: 30, y: 550, w: 325, h: 85}, {x: 255, y: 325, w: 100, h: 305}, {x: 260, y: 330, w: 315, h: 80}, {x: 475, y: 330, w: 105, h: 207}, {x: 475, y: 455, w: 260, h: 80}, {x: 635, y: 135, w: 100, h: 405}, {x: 385, y: 135, w: 350, h: 85}, {x: 385, y: 35, w: 95, h: 180}, {x: 385, y: 40, w: 510, h: 85}, {x: 800, y: 40, w: 95, h: 340}, {x: 800, y: 290, w: 160, h: 85}]
-var projectiles= []
+var projectiles = []
+var buttons = []
 
 var towerSize = 25
 
@@ -76,6 +77,42 @@ function createEnemies(health) {
 }
 
 /*----------CLASSES----------*/
+
+class Button {
+  constructor({x=0, y=0, w=0, h=0, color='red', pressedcolor='green', hovercolor='blue', pressedfunction="null"}) {
+    this.x = x
+    this.y = y
+    this.width = w
+    this.height = h
+    this.color = color
+    this.hovercolor = hovercolor
+    this.pressedcolor = pressedcolor
+    this.pressedfunction = pressedfunction
+    this.hover = false
+    this.clicked = false
+  }
+  draw() {
+    if (this.hover && this.clicked) {
+      c.fillStyle = this.pressedcolor
+    } else if (this.hover) {
+      c.fillStyle = this.hovercolor
+    } else {
+      c.fillStyle = this.color
+    }
+    c.fillRect(x, y, width, height)
+  }
+  update() {
+    if (mousex >= x && mousex <= x + width && mousey >= y && mousey <= mousey + height) {
+      this.hover = true
+    } else {
+      this.hover = false
+    }
+    this.draw()
+  }
+  onclick() {
+    setTimeout(this.pressedfunction, 0)
+  }
+}
 class Enemy {
     constructor({position={x:0, y:0}}) {
     this.position = position
@@ -264,11 +301,16 @@ function mainloop() {
       c.fillStyle = 'red'
     }
     createEnemies()
+    //-----UI ELEMENTS-----
     c.fillRect(mousex - towerSize, mousey - towerSize, towerSize * 2, towerSize * 2)
     c.fillStyle = 'white'
     c.font = '30px sans-serif'
     c.fillText("Money: " + money, 0, 30)
     c.fillText("Lives: " + lives, 0, 70)
+    for (let i = 0; i < buttons.length; i++) {
+      let button = buttons[i]
+      button.update
+    }
 };
 
 /*----------MOUSE EVENTS----------*/
@@ -284,6 +326,12 @@ canvas.addEventListener('mousemove', function () {
     if (validPlacement(mousex - towerSize, mousey - towerSize, towerSize * 2, towerSize * 2) && money > 9) {
       money -= 10
       towers.push(new tower({position: {x: mousex, y: mousey}}))
+    }
+    for (let i = 0; i < buttons.length; i++) {
+      if (buttons[i].hover) {
+        buttons[i].click  = true
+        buttons[i].onclick()
+      }
     }
   });
   canvas.addEventListener('mouseup', function () {
