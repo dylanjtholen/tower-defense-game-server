@@ -69,7 +69,7 @@ function validPlacement(x, y, w, h){
 
 function createEnemies(health) {
   if (enemies.length < 1000 && enemiesCooldown <= 0) {
-    enemies.push(new Enemy({position: {x: -100, y: 270}}))
+    enemies.push(new Enemy({position: {x: -100, y: 270}, health: 3}))
     enemiesCooldown += 50
   } else if (enemiesCooldown != 0) {
     enemiesCooldown -= 1
@@ -90,6 +90,7 @@ class Button {
     this.pressedfunction = pressedfunction
     this.hover = false
     this.clicked = false
+    this.declick = 0
   }
   draw() {
     if (this.hover && this.clicked) {
@@ -99,26 +100,34 @@ class Button {
     } else {
       c.fillStyle = this.color
     }
-    c.fillRect(x, y, width, height)
+    c.fillRect(this.x, this.y, this.width, this.height)
   }
   update() {
-    if (mousex >= x && mousex <= x + width && mousey >= y && mousey <= mousey + height) {
-      this.hover = true
+    if (mousex >= this.x && mousex <= this.x + this.width && mousey >= this.y && mousey <= this.y + this.height) {
+     this.hover = true
     } else {
       this.hover = false
+    if (this.declick <= 0) {
+      this.clicked = false
+    } else {
+      this.declick -= 1
     }
-    this.draw()
   }
+}
   onclick() {
+    this.declick += 10
+    this.clicked = true
+    this.draw()
     setTimeout(this.pressedfunction, 0)
   }
 }
 class Enemy {
-    constructor({position={x:0, y:0}}) {
+    constructor({position={x:0, y:0}, health}) {
     this.position = position
     this.width = 50
     this.height = 50
     this.waypointIndex = 0
+    this.health = health
     this.center = {
         x: this.position.x + this.width / 2,
         y: this.position.y + this.height / 2
@@ -133,6 +142,7 @@ class Enemy {
     draw() {
         c.fillStyle = 'red'
         c.fillRect(this.position.x, this.position.y, this.width, this.height)
+        c.fillText(this.health, this.x, this.y)
     }
     update() {
     this.draw()
@@ -229,6 +239,15 @@ class projectile {
 
     const speed = 20
 
+    if (enemies.length > 0) { 
+      this.endpoint.x = enemies[0].position.x
+      this.endpoint.y = enemies[0].position.y
+    }
+
+    this.yDistance = this.endpoint.y - this.center.y
+    this.xDistance = this.endpoint.x - this.center.x
+    this.angle = Math.atan2(this.yDistance, this.xDistance)
+
     this.velocity.x = Math.cos(this.angle) * speed
     this.velocity.y = Math.sin(this.angle) * speed
     
@@ -255,6 +274,9 @@ class projectile {
     }
   }
 }
+
+var startbutton = new Button({x: 100, y: 100, w: 100, h: 100, color: 'red', hovercolor: 'blue', pressedcolor: 'green'})
+buttons.push(startbutton)
 
 var map = new Image();
 map.src = "img/map.png";
@@ -309,7 +331,7 @@ function mainloop() {
     c.fillText("Lives: " + lives, 0, 70)
     for (let i = 0; i < buttons.length; i++) {
       let button = buttons[i]
-      button.update
+      button.update()
     }
 };
 
@@ -322,7 +344,6 @@ canvas.addEventListener('mousemove', function () {
   });
   canvas.addEventListener('mousedown', function () {
     mouseDown = true;
-    c.fillRect(mousex, mousey, 1, 1)
     if (validPlacement(mousex - towerSize, mousey - towerSize, towerSize * 2, towerSize * 2) && money > 9) {
       money -= 10
       towers.push(new tower({position: {x: mousex, y: mousey}}))
