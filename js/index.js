@@ -105,7 +105,7 @@ class Enemy {
     const xDistance = waypoint.x - this.center.x
     const angle = Math.atan2(yDistance, xDistance)
 
-    const speed = 3
+    const speed = 10
 
     this.velocity.x = Math.cos(angle) * speed
     this.velocity.y = Math.sin(angle) * speed
@@ -234,6 +234,11 @@ function mainloop() {
     c.clearRect(0, 0, canvas.width, canvas.height);
     c.fillStyle = 'red'
     c.drawImage(map, 0, 0, canvas.width, canvas.height);
+    if (lives <= 0) {
+      c.font = '96px sans-serif'
+      c.fillText("GAME OVER", canvas.width / 2 - 300, canvas.height / 2)
+      return
+    }
     for (let i = enemies.length - 1; i >= 0; i--) {
         let enemy = enemies[i]
         if (enemy.update()) {
