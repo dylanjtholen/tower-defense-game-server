@@ -79,7 +79,7 @@ function createEnemies(health) {
 /*----------CLASSES----------*/
 
 class Button {
-  constructor({x=0, y=0, w=0, h=0, color='red', pressedcolor='green', hovercolor='blue', pressedfunction="null"}) {
+  constructor({x=0, y=0, w=0, h=0, color='red', text='', pressedcolor='green', hovercolor='blue', pressedfunction="null"}) {
     this.x = x
     this.y = y
     this.width = w
@@ -91,8 +91,10 @@ class Button {
     this.hover = false
     this.clicked = false
     this.declick = 0
+    this.text = text
   }
   draw() {
+
     if (this.hover && this.clicked) {
       c.fillStyle = this.pressedcolor
     } else if (this.hover) {
@@ -100,19 +102,23 @@ class Button {
     } else {
       c.fillStyle = this.color
     }
+
     c.fillRect(this.x, this.y, this.width, this.height)
+    c.fillStyle = 'black'
+    c.fillText(this.text, this.x, this.y + 20)
   }
   update() {
     if (mousex >= this.x && mousex <= this.x + this.width && mousey >= this.y && mousey <= this.y + this.height) {
      this.hover = true
     } else {
       this.hover = false
+    }
     if (this.declick <= 0) {
       this.clicked = false
     } else {
       this.declick -= 1
     }
-  }
+  this.draw()
 }
   onclick() {
     this.declick += 10
@@ -274,8 +280,10 @@ class projectile {
     }
   }
 }
-
-var startbutton = new Button({x: 100, y: 100, w: 100, h: 100, color: 'red', hovercolor: 'blue', pressedcolor: 'green'})
+function buttonpressed() {
+  alert('button pressed')
+}
+var startbutton = new Button({x: 100, y: 100, w: 100, h: 100, color: 'red', text: 'play', hovercolor: 'blue', pressedcolor: 'green', pressedfunction: buttonpressed})
 buttons.push(startbutton)
 
 var map = new Image();
