@@ -18,10 +18,13 @@ var buttons = []
 
 var towerSize = 25
 
-var lives = 100
+var lives = 1
 var money = 10
 
 var enemiesCooldown
+
+var gamespeed = 0
+var framesPassed = 0
 
 /*----------FUNCTION DECLARATION----------*/
 
@@ -105,7 +108,7 @@ class Button {
 
     c.fillRect(this.x, this.y, this.width, this.height)
     c.fillStyle = 'black'
-    c.fillText(this.text, this.x, this.y + 20)
+    c.fillText(this.text, this.x + ((this.width / 2) - 30), this.y + ((this.height / 2) + 10))
   }
   update() {
     if (mousex >= this.x && mousex <= this.x + this.width && mousey >= this.y && mousey <= this.y + this.height) {
@@ -281,9 +284,9 @@ class projectile {
   }
 }
 function buttonpressed() {
-  alert('button pressed')
+  gamespeed = 1
 }
-var startbutton = new Button({x: 100, y: 100, w: 100, h: 100, color: 'red', text: 'play', hovercolor: 'blue', pressedcolor: 'green', pressedfunction: buttonpressed})
+var startbutton = new Button({x: 100, y: 100, w: 100, h: 100, color: 'red', text: 'start', hovercolor: 'blue', pressedcolor: 'green', pressedfunction: buttonpressed})
 buttons.push(startbutton)
 
 var map = new Image();
@@ -298,15 +301,11 @@ window.addEventListener('load', () => {
 
 function mainloop() {
   requestAnimationFrame(mainloop);
-    c.clearRect(0, 0, canvas.width, canvas.height);
+  c.clearRect(0, 0, canvas.width, canvas.height);
     c.fillStyle = 'red'
     c.drawImage(map, 0, 0, canvas.width, canvas.height);
-    if (lives <= 0) {
-      c.font = '96px sans-serif'
-      c.fillText("GAME OVER", canvas.width / 2 - 300, canvas.height / 2)
-      return
-    }
-    for (let i = enemies.length - 1; i >= 0; i--) {
+    if (!((gamespeed == 1 && framesPassed % 2 > 0) || gamespeed == 0)) {
+      for (let i = enemies.length - 1; i >= 0; i--) {
         let enemy = enemies[i]
         if (enemy.update()) {
           enemies.splice(i, 1)
@@ -326,11 +325,18 @@ function mainloop() {
         }
       }
     }
+    createEnemies()
+    }
+    if (lives <= 0) {
+      c.font = '96px sans-serif'
+      c.fillText("GAME OVER", canvas.width / 2 - 300, canvas.height / 2)
+      gamespeed = 0
+      return
+    }
     c.fillStyle = 'lime'
     if (!validPlacement(mousex - towerSize, mousey - towerSize, towerSize * 2, towerSize * 2)) {
       c.fillStyle = 'red'
     }
-    createEnemies()
     //-----UI ELEMENTS-----
     c.fillRect(mousex - towerSize, mousey - towerSize, towerSize * 2, towerSize * 2)
     c.fillStyle = 'white'
