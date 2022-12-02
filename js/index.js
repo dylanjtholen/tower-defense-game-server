@@ -25,6 +25,7 @@ var enemiesCooldown
 
 var gamespeed = 0
 var framesPassed = 0
+var speedButtonIndex
 
 /*----------FUNCTION DECLARATION----------*/
 
@@ -73,7 +74,7 @@ function validPlacement(x, y, w, h){
 function createEnemies(health) {
   if (enemies.length < 1000 && enemiesCooldown <= 0) {
     enemies.push(new Enemy({position: {x: -100, y: 270}, health: 3}))
-    enemiesCooldown += 50
+    enemiesCooldown += 50 / gamespeed
   } else if (enemiesCooldown != 0) {
     enemiesCooldown -= 1
   }
@@ -161,7 +162,7 @@ class Enemy {
     const xDistance = waypoint.x - this.center.x
     const angle = Math.atan2(yDistance, xDistance)
 
-    const speed = 3
+    const speed = 3 * gamespeed
 
     this.velocity.x = Math.cos(angle) * speed
     this.velocity.y = Math.sin(angle) * speed
@@ -195,7 +196,7 @@ class tower {
     this.position = position
     this.width = towerSize * 2
     this.height = towerSize * 2
-    this.projectileCooldown = 60
+    this.projectileCooldown = 0
     this.center = {
         x: this.position.x + this.width / 2,
         y: this.position.y + this.height / 2
@@ -209,7 +210,7 @@ class tower {
     this.draw()
     
     if (this.projectileCooldown <= 0 && enemies.length > 0) {
-    this.projectileCooldown += 60
+    this.projectileCooldown += 60 / gamespeed
     projectiles.push(new projectile({position: {x:this.position.x, y:this.position.y}, endpoint: {x: enemies[0].position.x, y:enemies[0].position.y}}))
     } else {
       this.projectileCooldown -= 1
@@ -246,7 +247,7 @@ class projectile {
     update() {
     this.draw()
 
-    const speed = 20
+    const speed = 20 * gamespeed
 
     if (enemies.length > 0) { 
       this.endpoint.x = enemies[0].position.x
@@ -290,8 +291,22 @@ function buttonpressed() {
       buttons.splice(i, 1)
     } 
   }
+  var speedButton = new Button({x: 860, y: 540, w: 100, h: 100, color: 'red', text: 'fast', hovercolor: 'blue', pressedcolor: 'green', pressedfunction: changeSpeed})
+  speedButtonIndex = buttons.length
+  buttons.push(speedButton)
 }
-var startbutton = new Button({x: 100, y: 100, w: 100, h: 100, color: 'red', text: 'start', hovercolor: 'blue', pressedcolor: 'green', pressedfunction: buttonpressed})
+
+function changeSpeed() {
+  if (gamespeed == 1) {
+    gamespeed = 2
+    buttons[speedButtonIndex].text = 'slow'
+  } else {
+    gamespeed = 1
+    buttons[speedButtonIndex].text = 'fast'
+  }
+}
+
+var startbutton = new Button({x: 860, y: 540, w: 100, h: 100, color: 'red', text: 'start', hovercolor: 'blue', pressedcolor: 'green', pressedfunction: buttonpressed})
 buttons.push(startbutton)
 
 var map = new Image();
@@ -309,12 +324,11 @@ function mainloop() {
   c.clearRect(0, 0, canvas.width, canvas.height);
     c.fillStyle = 'red'
     c.drawImage(map, 0, 0, canvas.width, canvas.height);
-    if (!((gamespeed == 1 && framesPassed % 2 > 0) || gamespeed == 0)) {
-      for (let i = enemies.length - 1; i >= 0; i--) {
-        let enemy = enemies[i]
-        if (enemy.update()) {
-          enemies.splice(i, 1)
-        }
+    for (let i = enemies.length - 1; i >= 0; i--) {
+      let enemy = enemies[i]
+      if (enemy.update()) {
+        enemies.splice(i, 1)
+      }
     }
     if (towers.length > 0) {
       for (let i = 0; i < towers.length; i++) {
@@ -330,6 +344,7 @@ function mainloop() {
         }
       }
     }
+    if (gamespeed > 0) {
     createEnemies()
     }
     if (lives <= 0) {
