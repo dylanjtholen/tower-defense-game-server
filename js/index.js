@@ -285,6 +285,11 @@ class projectile {
 }
 function buttonpressed() {
   gamespeed = 1
+  for (let i = 0; i < buttons.length; i++) {
+    if (buttons[i] === startbutton) {
+      buttons.splice(i, 1)
+    } 
+  }
 }
 var startbutton = new Button({x: 100, y: 100, w: 100, h: 100, color: 'red', text: 'start', hovercolor: 'blue', pressedcolor: 'green', pressedfunction: buttonpressed})
 buttons.push(startbutton)
