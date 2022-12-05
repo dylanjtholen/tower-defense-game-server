@@ -1,2 +1,2 @@
-# towe-defense-game
+# tower-defense-game
 tower defense game
