@@ -24,7 +24,7 @@ var money = 10
 var enemiesCooldown
 
 var gamespeed = 0
-var framesPassed = 0
+var gameFramesPassed = 0
 var speedButtonIndex
 
 /*----------FUNCTION DECLARATION----------*/
@@ -325,6 +325,7 @@ window.addEventListener('load', () => {
 
 function mainloop() {
   requestAnimationFrame(mainloop);
+  gameFramesPassed += gamespeed
   c.clearRect(0, 0, canvas.width, canvas.height);
     c.fillStyle = 'red'
     c.drawImage(map, 0, 0, canvas.width, canvas.height);
@@ -349,7 +350,7 @@ function mainloop() {
       }
     }
     if (gamespeed > 0) {
-    createEnemies(2)
+    createEnemies(Math.round((gameFramesPassed / 2000) + 1))
     }
     if (lives <= 0) {
       c.font = '96px sans-serif'
