@@ -1,7 +1,7 @@
 const canvas = document.querySelector('canvas');
 const c = canvas.getContext('2d');
 
-canvas.width = 960;
+canvas.width = 1060;
 canvas.height = 640;
 
 let bound = canvas.getBoundingClientRect();
@@ -12,7 +12,7 @@ var mousey
 var enemies = []
 var waypoints = [{x: 0, y: 270}, {x:300, y:270}, {x:300, y:50}, {x:75, y:50}, {x:75, y:585}, {x:300, y:585}, {x:300, y:360}, {x:525, y:360}, {x:525, y:485}, {x:680, y:485}, {x:680, y:170}, {x:430, y:170}, {x:430, y:80}, {x:840, y:80}, {x:840, y:325}, {x:1000, y:325}]
 var towers = []
-var collisionRectangles = [{x: 860, y: 540, w: 100, h: 100}, {x:0, y:230, w:350, h:80}, {x: 255, y: 10, w: 100, h: 300}, {x: 35, y: 5, w: 315, h: 85}, {x: 30, y: 5, w: 95, h: 625}, {x: 30, y: 550, w: 325, h: 85}, {x: 255, y: 325, w: 100, h: 305}, {x: 260, y: 330, w: 315, h: 80}, {x: 475, y: 330, w: 105, h: 207}, {x: 475, y: 455, w: 260, h: 80}, {x: 635, y: 135, w: 100, h: 405}, {x: 385, y: 135, w: 350, h: 85}, {x: 385, y: 35, w: 95, h: 180}, {x: 385, y: 40, w: 510, h: 85}, {x: 800, y: 40, w: 95, h: 340}, {x: 800, y: 290, w: 160, h: 85}]
+var collisionRectangles = [{x: 960, y: 0, w: 100, h: canvas.height}, {x:0, y:230, w:350, h:80}, {x: 255, y: 10, w: 100, h: 300}, {x: 35, y: 5, w: 315, h: 85}, {x: 30, y: 5, w: 95, h: 625}, {x: 30, y: 550, w: 325, h: 85}, {x: 255, y: 325, w: 100, h: 305}, {x: 260, y: 330, w: 315, h: 80}, {x: 475, y: 330, w: 105, h: 207}, {x: 475, y: 455, w: 260, h: 80}, {x: 635, y: 135, w: 100, h: 405}, {x: 385, y: 135, w: 350, h: 85}, {x: 385, y: 35, w: 95, h: 180}, {x: 385, y: 40, w: 510, h: 85}, {x: 800, y: 40, w: 95, h: 340}, {x: 800, y: 290, w: 160, h: 85}]
 var projectiles = []
 var buttons = []
 
@@ -295,7 +295,7 @@ function buttonpressed() {
       buttons.splice(i, 1)
     } 
   }
-  var speedButton = new Button({x: 860, y: 540, w: 100, h: 100, color: 'red', text: 'fast', hovercolor: 'blue', pressedcolor: 'green', pressedfunction: changeSpeed})
+  var speedButton = new Button({x: 960, y: 540, w: 100, h: 100, color: 'red', text: 'fast', hovercolor: 'blue', pressedcolor: 'green', pressedfunction: changeSpeed})
   speedButtonIndex = buttons.length
   buttons.push(speedButton)
 }
@@ -310,7 +310,7 @@ function changeSpeed() {
   }
 }
 
-var startbutton = new Button({x: 860, y: 540, w: 100, h: 100, color: 'red', text: 'start', hovercolor: 'blue', pressedcolor: 'green', pressedfunction: buttonpressed})
+var startbutton = new Button({x: 960, y: 540, w: 100, h: 100, color: 'red', text: 'start', hovercolor: 'blue', pressedcolor: 'green', pressedfunction: buttonpressed})
 buttons.push(startbutton)
 
 var map = new Image();
@@ -328,7 +328,7 @@ function mainloop() {
   gameFramesPassed += gamespeed
   c.clearRect(0, 0, canvas.width, canvas.height);
     c.fillStyle = 'red'
-    c.drawImage(map, 0, 0, canvas.width, canvas.height);
+    c.drawImage(map, 0, 0, canvas.width - 100, canvas.height);
     for (let i = enemies.length - 1; i >= 0; i--) {
       let enemy = enemies[i]
       if (enemy.update()) {
@@ -365,6 +365,13 @@ function mainloop() {
     }
     //-----UI ELEMENTS-----
     c.fillRect(mousex - towerSize, mousey - towerSize, towerSize * 2, towerSize * 2)
+    c.beginPath()
+    c.arc(mousex, mousey, 500, 0, 2 * Math.PI)
+    c.fillStyle = 'rgba(240, 248, 255, 0.05)'
+    c.fill()
+    c.fillStyle = 'rgb(240, 248, 255)'
+    c.stroke()
+    c.closePath()
     c.fillStyle = 'white'
     c.font = '30px sans-serif'
     c.fillText("Money: " + money, 0, 30)
