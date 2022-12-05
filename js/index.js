@@ -151,7 +151,8 @@ class Enemy {
     draw() {
         c.fillStyle = 'red'
         c.fillRect(this.position.x, this.position.y, this.width, this.height)
-        c.fillText(this.health, this.x, this.y)
+        c.fillStyle = 'black'
+        c.fillText(this.health, this.position.x, this.position.y)
     }
     update() {
     this.draw()
