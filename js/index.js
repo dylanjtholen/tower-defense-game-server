@@ -73,7 +73,7 @@ function validPlacement(x, y, w, h){
 
 function createEnemies(health) {
   if (enemies.length < 1000 && enemiesCooldown <= 0) {
-    enemies.push(new Enemy({position: {x: -100, y: 270}, health: 3}))
+    enemies.push(new Enemy({position: {x: -100, y: 270}, health: health}))
     enemiesCooldown += 50 / gamespeed
   } else if (enemiesCooldown != 0) {
     enemiesCooldown -= 1
@@ -143,7 +143,6 @@ class Enemy {
         y: this.position.y + this.height / 2
     }
     this.radius = 50
-    this.health = 100
     this.velocity = {
         x: 0,
         y: 0
@@ -173,6 +172,10 @@ class Enemy {
     this.center = {
       x: this.position.x + this.width / 2,
       y: this.position.y + this.height / 2
+    }
+
+    if (this.health <= 0) {
+      return true
     }
 
     if (
@@ -272,7 +275,7 @@ class projectile {
     for (let i = 0; i < enemies.length; i++) {
     let enemy = enemies[i]
     if (isColliding(this.position.x, this.position.y, this.width, this.height, enemy.position.x, enemy.position.y, enemy.width, enemy.height)) {
-      enemies.splice(i, 1);
+      enemies[i].health -= 1
       money++
       return true
     }
@@ -345,10 +348,11 @@ function mainloop() {
       }
     }
     if (gamespeed > 0) {
-    createEnemies()
+    createEnemies(2)
     }
     if (lives <= 0) {
       c.font = '96px sans-serif'
+      c.fillStyle = 'red'
       c.fillText("GAME OVER", canvas.width / 2 - 300, canvas.height / 2)
       gamespeed = 0
       return
