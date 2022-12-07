@@ -16,14 +16,14 @@ var collisionRectangles = [{ x: 960, y: 0, w: 100, h: canvas.height }, { x: 0, y
 var projectiles = []
 var buttons = []
 
-var towerSizes = [0, 25, 20, 30]
-var towerSpeeds = [0, 60, 120, 10]
-var towerCosts = [0, 10, 25, 15]
-var towerDamage = [0, 1, 5, 1]
-var towerRanges = [0, 500, 1000, 100]
+var towerSizes = [0, 25, 20, 30, 100]
+var towerSpeeds = [0, 60, 120, 10, 0]
+var towerCosts = [0, 120, 220, 320, 999999]
+var towerDamage = [0, 2, 5, 1, 20]
+var towerRanges = [0, 500, 1000, 100, 2000]
 
-var lives = 1
-var money = 10
+var lives = 100
+var money = 120
 
 var enemiesCooldown
 
@@ -207,7 +207,7 @@ class Enemy {
       Math.abs(this.velocity.y)
     ) {
       if (this.waypointIndex == waypoints.length - 1) {
-        lives -= 1
+        lives -= this.health
         return true
       } else {
         this.waypointIndex++
@@ -318,11 +318,9 @@ class projectile {
       if (isColliding(this.position.x, this.position.y, this.width, this.height, enemy.position.x, enemy.position.y, enemy.width, enemy.height)) {
         if (enemies[i].health < this.damage) {
           money += enemies[i].health
-          enemies[i].health -= this.damage
           this.damage -= enemies[i].health
-          if (enemies[i].health <= 0) {
+          enemies[i].health -= this.damage
             enemies.splice(i, 1)
-          }
           this.endpoint.x = this.position.x + this.velocity.x * 10
           this.endpoint.y = this.position.y + this.velocity.y * 10
         } else {
@@ -345,7 +343,10 @@ class projectile {
       Math.abs(this.velocity.x) &&
       Math.abs(Math.round(this.center.y) - Math.round(this.endpoint.y)) <
       Math.abs(this.velocity.y)
-    ) {return true}
+    ) {
+      this.endpoint.x = this.position.x + this.velocity.x * 10
+      this.endpoint.y = this.position.y + this.velocity.y * 10
+    }
   }
 }
 function buttonpressed() {
@@ -394,14 +395,24 @@ function placetower3() {
   }
 }
 
+function placetower4() {
+  if (placingTower != 4) {
+    placingTower = 4
+  } else {
+    placingTower = 0
+  }
+}
+
 var startbutton = new Button({ x: 960, y: 540, w: 100, h: 100, color: 'red', text: 'start', hovercolor: 'blue', pressedcolor: 'green', pressedfunction: buttonpressed })
 var tower1button = new Button({ x: 960, y: 0, w: 100, h: 100, color: 'lime', text: 'tower1', hovercolor: 'green', pressedcolor: 'blue', pressedfunction: placetower1 })
 var tower2button = new Button({ x: 960, y: 100, w: 100, h: 100, color: 'lime', text: 'tower2', hovercolor: 'green', pressedcolor: 'blue', pressedfunction: placetower2 })
 var tower3button = new Button({ x: 960, y: 200, w: 100, h: 100, color: 'lime', text: 'tower3', hovercolor: 'green', pressedcolor: 'blue', pressedfunction: placetower3 })
+var tower4button = new Button({ x: 960, y: 300, w: 100, h: 100, color: 'lime', text: 'tower4', hovercolor: 'green', pressedcolor: 'blue', pressedfunction: placetower4 })
 buttons.push(startbutton)
 buttons.push(tower1button)
 buttons.push(tower2button)
 buttons.push(tower3button)
+buttons.push(tower4button)
 
 var map = new Image();
 map.src = "img/map.png";
@@ -483,8 +494,8 @@ canvas.addEventListener('mousemove', function () {
 })
 canvas.addEventListener('mousedown', function () {
   mouseDown = true
-  if (placingTower > 0 && validPlacement(mousex - towerSizes[placingTower], mousey - towerSizes[placingTower], towerSizes[placingTower] * 2, towerSizes[placingTower] * 2) && money > 9) {
-    money -= 10
+  if (placingTower > 0 && validPlacement(mousex - towerSizes[placingTower], mousey - towerSizes[placingTower], towerSizes[placingTower] * 2, towerSizes[placingTower] * 2) && money >= towerCosts[placingTower]) {
+    money -= towerCosts[placingTower]
     towers.push(new tower({ position: { x: mousex, y: mousey }, type: placingTower }))
     placingTower = 0
   }
