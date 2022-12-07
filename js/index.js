@@ -20,10 +20,14 @@ var towerSizes = [0, 25, 20, 30, 100]
 var towerSpeeds = [0, 60, 120, 10, 0]
 var towerCosts = [0, 120, 220, 320, 999999]
 var towerDamage = [0, 2, 5, 1, 20]
-var towerRanges = [0, 500, 1000, 100, 2000]
+var towerRanges = [0, 200, 1000, 100, 2000]
 
 var lives = 100
 var money = 120
+var round = 1
+var roundIndex =0
+var rounds = [ [], [1, 1, 1, 1, 1, 1, 1, 2, 2, 2], [1, 2, 1, 2, 1, 2, 1, 2], [], [], [], [], [], [], [] ]
+var roundWaiting = false
 
 var enemiesCooldown
 
@@ -91,11 +95,21 @@ function validPlacement(x, y, w, h) {
   }
 }
 
-function createEnemies(health) {
+function createEnemies() {
   if (enemies.length < 1000 && enemiesCooldown <= 0) {
-    enemies.push(new Enemy({ position: { x: -100, y: 270 }, health: health }))
-    enemiesCooldown += 50 / gamespeed
-  } else if (enemiesCooldown != 0) {
+    if (!roundWaiting) {
+      enemies.push(new Enemy({ position: { x: -100, y: 270 }, health: rounds[round][roundIndex] }))
+      roundIndex += 1
+      if (roundIndex + 1 > rounds[round].length) {
+        roundIndex = 0
+        roundWaiting = true
+      }
+      enemiesCooldown += 50 / gamespeed
+    } else if (enemies.length == 0) {
+      round += 1
+      roundWaiting = false
+    }
+  } else if (enemiesCooldown > 0) {
     enemiesCooldown -= 1
   }
 }
@@ -349,7 +363,7 @@ class projectile {
     }
   }
 }
-function buttonpressed() {
+function startbuttonpressed() {
   gamespeed = 1
   for (let i = 0; i < buttons.length; i++) {
     if (buttons[i] === startbutton) {
@@ -365,9 +379,11 @@ function changeSpeed() {
   if (gamespeed == 1) {
     gamespeed = 2
     buttons[speedButtonIndex].text = 'slow'
+    enemiesCooldown /= 2
   } else {
     gamespeed = 1
     buttons[speedButtonIndex].text = 'fast'
+    enemiesCooldown *= 2
   }
 }
 
@@ -403,7 +419,7 @@ function placetower4() {
   }
 }
 
-var startbutton = new Button({ x: 960, y: 540, w: 100, h: 100, color: 'red', text: 'start', hovercolor: 'blue', pressedcolor: 'green', pressedfunction: buttonpressed })
+var startbutton = new Button({ x: 960, y: 540, w: 100, h: 100, color: 'red', text: 'start', hovercolor: 'blue', pressedcolor: 'green', pressedfunction: startbuttonpressed })
 var tower1button = new Button({ x: 960, y: 0, w: 100, h: 100, color: 'lime', text: 'tower1', hovercolor: 'green', pressedcolor: 'blue', pressedfunction: placetower1 })
 var tower2button = new Button({ x: 960, y: 100, w: 100, h: 100, color: 'lime', text: 'tower2', hovercolor: 'green', pressedcolor: 'blue', pressedfunction: placetower2 })
 var tower3button = new Button({ x: 960, y: 200, w: 100, h: 100, color: 'lime', text: 'tower3', hovercolor: 'green', pressedcolor: 'blue', pressedfunction: placetower3 })
@@ -450,8 +466,15 @@ function mainloop() {
       }
     }
   }
+  if (round > rounds.length - 1) {
+    c.font = '96px sans-serif'
+    c.fillStyle = 'black'
+    c.fillText("YOU WIN", canvas.width / 2 - 300, canvas.height / 2)
+    gamespeed = 0
+    return
+  }
   if (gamespeed > 0) {
-    createEnemies(Math.round((gameFramesPassed / 2000) + 1))
+    createEnemies()
   }
   if (lives <= 0) {
     c.font = '96px sans-serif'
