@@ -323,6 +323,8 @@ class projectile {
           if (enemies[i].health <= 0) {
             enemies.splice(i, 1)
           }
+          this.endpoint.x = this.position.x + this.velocity.x * 10
+          this.endpoint.y = this.position.y + this.velocity.y * 10
         } else {
           money += this.damage
           enemies[i].health -= this.damage
