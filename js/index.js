@@ -16,10 +16,10 @@ var collisionRectangles = [{ x: 960, y: 0, w: 100, h: canvas.height }, { x: 0, y
 var projectiles = []
 var buttons = []
 
-var towerSizes = [0, 25, 50, 30]
+var towerSizes = [0, 25, 20, 30]
 var towerSpeeds = [0, 60, 120, 10]
 var towerCosts = [0, 10, 25, 15]
-var towerDamage = [0, 1, 5, 0.1]
+var towerDamage = [0, 1, 5, 1]
 var towerRanges = [0, 500, 1000, 100]
 
 var lives = 1
@@ -44,6 +44,10 @@ function findPos(obj) {
     return { x: curleft, y: curtop };
   }
   return undefined;
+}
+
+function distance(x, y,  x2, y2) {
+  return Math.sqrt((x - x2) ** 2 + (y - y2) ** 2)
 }
 
 function isColliding(x, y, w, h, x2, y2, w2, h2) {
@@ -237,7 +241,13 @@ class tower {
 
     if (this.projectileCooldown <= 0 && enemies.length > 0) {
       this.projectileCooldown += this.speed / gamespeed
-      projectiles.push(new projectile({ position: { x: this.position.x, y: this.position.y }, endpoint: { x: enemies[0].position.x, y: enemies[0].position.y }, damage: this.damage, lifespan: this.range }))
+      for (let i in enemies) {
+        let enemy = enemies[i]
+        if ((this.range >= distance(this.position.x, this.position.y, enemy.position.x, enemy.position.y)) || (this.range >= distance(this.position.x, this.position.y, enemy.position.x, enemy.position.y + enemy.height)) || (this.range >= distance(this.position.x, this.position.y, enemy.position.x + enemy.width, enemy.position.y)) || (this.range >= distance(this.position.x, this.position.y, enemy.position.x + enemy.width, enemy.position.y + enemy.height))) {
+          projectiles.push(new projectile({ position: { x: this.position.x, y: this.position.y }, endpoint: { x: enemy.position.x, y: enemy.position.y }, damage: this.damage, lifespan: this.range }))
+          return
+      }
+      }
     } else {
       this.projectileCooldown -= 1
     }
@@ -249,6 +259,7 @@ class projectile {
     this.position = position
     this.damage = damage
     this.lifespan = lifespan
+    this.range = 100
     this.width = 12.5
     this.height = 12.5
     this.waypointIndex = 0
@@ -278,8 +289,13 @@ class projectile {
     const speed = 20 * gamespeed
 
     if (enemies.length > 0) {
-      this.endpoint.x = enemies[0].position.x
-      this.endpoint.y = enemies[0].position.y
+      for (let i in enemies) {
+        let enemy = enemies[i]
+        if ((this.range >= distance(this.position.x, this.position.y, enemy.position.x, enemy.position.y)) || (this.range >= distance(this.position.x, this.position.y, enemy.position.x, enemy.position.y + enemy.height)) || (this.range >= distance(this.position.x, this.position.y, enemy.position.x + enemy.width, enemy.position.y)) || (this.range >= distance(this.position.x, this.position.y, enemy.position.x + enemy.width, enemy.position.y + enemy.height))) {
+          this.endpoint.x = enemy.center.x
+          this.endpoint.y = enemy.center.y
+      }
+      }
     }
 
     this.yDistance = this.endpoint.y - this.center.y
@@ -302,14 +318,19 @@ class projectile {
       if (isColliding(this.position.x, this.position.y, this.width, this.height, enemy.position.x, enemy.position.y, enemy.width, enemy.height)) {
         if (enemies[i].health < this.damage) {
           money += enemies[i].health
+          enemies[i].health -= this.damage
+          this.damage -= enemies[i].health
+          if (enemies[i].health <= 0) {
+            enemies.splice(i, 1)
+          }
         } else {
           money += this.damage
+          enemies[i].health -= this.damage
+          if (enemies[i].health <= 0) {
+            enemies.splice(i, 1)
+          }
+          return true
         }
-        enemies[i].health -= this.damage
-        if (enemies[i].health <= 0) {
-          enemies.splice(i, 1)
-        }
-        return true
       }
     }
     if (
@@ -317,6 +338,12 @@ class projectile {
     ) {
       return true
     }
+    if (
+      Math.abs(Math.round(this.center.x) - Math.round(this.endpoint.x)) <
+      Math.abs(this.velocity.x) &&
+      Math.abs(Math.round(this.center.y) - Math.round(this.endpoint.y)) <
+      Math.abs(this.velocity.y)
+    ) {return true}
   }
 }
 function buttonpressed() {
