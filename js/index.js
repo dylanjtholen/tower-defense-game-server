@@ -18,7 +18,7 @@ var buttons = []
 
 var towerSizes = [0, 25, 20, 30, 100]
 var towerSpeeds = [0, 60, 120, 10, 0]
-var towerCosts = [0, 120, 220, 320, 999999]
+var towerCosts = [0, 120, 220, 320, 100000]
 var towerDamage = [0, 2, 5, 1, 20]
 var towerRanges = [0, 200, 1000, 100, 2000]
 
@@ -99,7 +99,7 @@ function validPlacement(x, y, w, h) {
 function createEnemies() {
   if (enemies.length < 1000 && enemiesCooldown <= 0) {
     if (!roundWaiting) {
-      enemies.push(new Enemy({ position: { x: -100, y: 270 }, health: rounds[round][roundIndex] * Math.ceil(round * 0.5) }))
+      enemies.push(new Enemy({ position: { x: -100, y: 270 }, health: rounds[round][roundIndex] * Math.ceil(round * 0.2) }))
       roundIndex += 1
       if (roundIndex + 1 > rounds[round].length) {
         roundIndex = 0
