@@ -99,7 +99,7 @@ function validPlacement(x, y, w, h) {
 function createEnemies() {
   if (enemies.length < 1000 && enemiesCooldown <= 0) {
     if (!roundWaiting) {
-      enemies.push(new Enemy({ position: { x: -100, y: 270 }, health: rounds[round][roundIndex] }))
+      enemies.push(new Enemy({ position: { x: -100, y: 270 }, health: rounds[round][roundIndex] * Math.ceil(round * 0.5) }))
       roundIndex += 1
       if (roundIndex + 1 > rounds[round].length) {
         roundIndex = 0
@@ -547,6 +547,7 @@ function mainloop() {
   c.font = '30px sans-serif'
   c.fillText("Money: " + Math.round(money), 0, 30)
   c.fillText("Lives: " + lives, 0, 70)
+  c.fillText("Round: " + round, 0, 110)
   for (let i = 0; i < buttons.length; i++) {
     let button = buttons[i]
     button.update()
