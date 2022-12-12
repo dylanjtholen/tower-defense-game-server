@@ -17,12 +17,14 @@ var projectiles = []
 var buttons = []
 
 var towerSizes = [0, 25, 20, 30, 100]
-var towerSpeeds = [0, 60, 120, 10, 0]
+var towerSpeeds = [0, 60, 120, 10, 1]
 var towerCosts = [0, 120, 220, 320, 100000]
 var towerDamage = [0, 2, 5, 1, 20]
 var towerRanges = [0, 200, 1000, 100, 2000]
+var towerNames = ['', 'basic', 'sniper', 'fast', 'god']
 
 var upgrades = [[], [0, 0, 0, 0, 0, 0, -1], [0, 0, 0, 0, 0, 0, -1], [0, 0, 0, 0, 0, 0, -1], [0, 0, 0, 0, 0, 0, -1]]
+var upgradeNames = [[], ['faster', 'range', 'double shot', 'triple shot', '+2 damage', '+2 damage', ' shotgun'], ['faster', 'pre round preparation', ' stun', 'longer stun', '+2 damage', '+3 damage', ' seeking'], ['range', 'range', 'faster', '+2 damage', '+1 damage', '+1 damage', 'no cooldown'], []]
 var towerBeingUpgraded = 1
 
 var lives = 100
@@ -41,6 +43,24 @@ var speedButtonIndex
 var placingTower = 0
 var inUpgradesScreen = false
 var upgradeButtons = []
+
+var devmode = true
+
+/*
+Python code for generating rounds
+
+import random
+
+tempArray = []
+outputArray = []
+
+for i in range(0, 98):
+    for u in range(0, random.randint(0, 10) + round(i / 2)):
+        tempArray.append(random.randint(round(i * 0.8), round(i * 1.5)))
+    outputArray.append(tempArray)
+    tempArray = []
+print(outputArray)
+*/
 
 /*----------FUNCTION DECLARATION----------*/
 
@@ -68,6 +88,33 @@ function isColliding(x, y, w, h, x2, y2, w2, h2) {
   } else {
     return false
   }
+}
+
+function lineLineIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
+
+  // calculate the distance to intersection point
+  let uA = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
+  let uB = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
+
+  // if uA and uB are between 0-1, lines are colliding
+  if (uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1) {
+
+    // where the lines meet
+    let intersectionX = x1 + (uA * (x2-x1));
+    let intersectionY = y1 + (uA * (y2-y1));
+
+    return true;
+  }
+  return false;
+}
+
+function rectLineIntersection(rx, ry, rw, rh, lx1, ly1, lx2, ly2) {
+  let intersecting = false
+  if (lineLineIntersection(lx1, ly1, lx2, ly2, rx, ry, rx, ry + rh) || lineLineIntersection(lx1, ly1, lx2, ly2, rx, ry + rh, rx + rw, ry + rh) || lineLineIntersection(lx1, ly1, lx2, ly2, rx + rw, ry + rh, rx + rw, ry) || lineLineIntersection(lx1, ly1, lx2, ly2, rx, ry, rx + rw, ry)) {
+    intersecting = true
+  }
+  return intersecting
+
 }
 
 function validPlacement(x, y, w, h) {
@@ -178,10 +225,11 @@ class Button {
       sell(this.towerToSell, this.buttonToSell)
       return true
     } else if (this.pressedfunction == 'makesellbutton') {
-      buttons.push(new Button({ x: this.towerToSell.position.x - towerSizes[this.towerToSell.type], y: this.towerToSell.position.y - towerSizes[this.towerToSell.type] * 2, w: towerSizes[this.towerToSell.type] * 2, h: towerSizes[this.towerToSell.type], color: "red", pressedcolor: "red", hovercolor: "red", text: " sell", pressedfunction: "" }))
-      buttons[buttons.length - 1].towerToSell = this.towerToSell
-      buttons[buttons.length - 1].buttonToSell = this.buttonToSell
-      buttons[buttons.length - 1].pressedfunction = sell
+      let tempbutton = new Button({ x: this.towerToSell.position.x - towerSizes[this.towerToSell.type], y: this.towerToSell.position.y - towerSizes[this.towerToSell.type] * 1, w: towerSizes[this.towerToSell.type] * 2, h: towerSizes[this.towerToSell.type], color: "red", pressedcolor: "red", hovercolor: "red", text: " sell", pressedfunction: "" })
+      tempbutton.towerToSell = this.towerToSell
+      tempbutton.buttonToSell = this.buttonToSell
+      tempbutton.pressedfunction = sell
+      buttons.push(tempbutton)
     } else {
       setTimeout(this.pressedfunction, 0)
     }
@@ -243,7 +291,7 @@ class Enemy {
       Math.abs(this.velocity.y)
     ) {
       if (this.waypointIndex == waypoints.length - 1) {
-        lives -= this.health
+        lives -= this.health * !devmode
         return true
       } else {
         this.waypointIndex++
@@ -280,7 +328,7 @@ class tower {
       for (let i in enemies) {
         let enemy = enemies[i]
         if ((this.range >= distance(this.position.x, this.position.y, enemy.position.x, enemy.position.y)) || (this.range >= distance(this.position.x, this.position.y, enemy.position.x, enemy.position.y + enemy.height)) || (this.range >= distance(this.position.x, this.position.y, enemy.position.x + enemy.width, enemy.position.y)) || (this.range >= distance(this.position.x, this.position.y, enemy.position.x + enemy.width, enemy.position.y + enemy.height))) {
-          projectiles.push(new projectile({ position: { x: this.position.x, y: this.position.y }, endpoint: { x: enemy.position.x, y: enemy.position.y }, damage: this.damage, lifespan: this.range }))
+          projectiles.push(new projectile({ position: { x: this.position.x, y: this.position.y }, endpoint: { x: enemy.position.x + (enemy.velocity.x * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20), y: enemy.position.y + (enemy.velocity.y * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20) }, damage: this.damage, lifespan: this.range, type: this.type }))
           return
         }
       }
@@ -291,14 +339,17 @@ class tower {
 }
 
 class projectile {
-  constructor({ position = { x: 0, y: 0 }, endpoint = { x: 0, y: 0 }, damage = 1, lifespan = 500 }) {
+  constructor({ position = { x: 0, y: 0 }, endpoint = { x: 0, y: 0 }, damage = 1, lifespan = 500, type = 0 }) {
     this.position = position
+    this.oldpositon = {x: 0, y: 0}
     this.damage = damage
     this.lifespan = lifespan
+    this.type = type
     this.range = 100
     this.width = 12.5
     this.height = 12.5
     this.waypointIndex = 0
+    this.speed = 0
     this.distanceTravelled = 0
     this.center = {
       x: this.position.x + this.width / 2,
@@ -322,28 +373,37 @@ class projectile {
   update() {
     this.draw()
 
-    const speed = 20 * gamespeed
+    if (this.type = 2) {
+      this.speed = 50 * gamespeed
+    } else {
+      this.speed = 20 * gamespeed
+    }
 
+    if (this.type == 2 && upgrades[2][6] == 1) {
     if (enemies.length > 0) {
       for (let i in enemies) {
         let enemy = enemies[i]
-        if ((this.range >= distance(this.position.x, this.position.y, enemy.position.x, enemy.position.y)) || (this.range >= distance(this.position.x, this.position.y, enemy.position.x, enemy.position.y + enemy.height)) || (this.range >= distance(this.position.x, this.position.y, enemy.position.x + enemy.width, enemy.position.y)) || (this.range >= distance(this.position.x, this.position.y, enemy.position.x + enemy.width, enemy.position.y + enemy.height))) {
+        let lowestDistance = 9999999
+        if (distance(this.position.x, this.position.y, enemy.position.x, enemy.position.y) < lowestDistance) {
           this.endpoint.x = enemy.center.x
           this.endpoint.y = enemy.center.y
         }
       }
     }
+  }
 
     this.yDistance = this.endpoint.y - this.center.y
     this.xDistance = this.endpoint.x - this.center.x
     this.angle = Math.atan2(this.yDistance, this.xDistance)
 
-    this.velocity.x = Math.cos(this.angle) * speed
-    this.velocity.y = Math.sin(this.angle) * speed
+    this.velocity.x = Math.cos(this.angle) * this.speed
+    this.velocity.y = Math.sin(this.angle) * this.speed
 
+    this.oldpositon.x = this.position.x
+    this.oldpositon.y = this.position.y
     this.position.x += this.velocity.x
     this.position.y += this.velocity.y
-    this.distanceTravelled += speed
+    this.distanceTravelled += this.speed
     this.center = {
       x: this.position.x + this.width / 2,
       y: this.position.y + this.height / 2
@@ -351,7 +411,7 @@ class projectile {
 
     for (let i = 0; i < enemies.length; i++) {
       let enemy = enemies[i]
-      if (isColliding(this.position.x, this.position.y, this.width, this.height, enemy.position.x, enemy.position.y, enemy.width, enemy.height)) {
+      if (isColliding(this.position.x, this.position.y, this.width, this.height, enemy.position.x, enemy.position.y, enemy.width, enemy.height) || rectLineIntersection(enemy.position.x, enemy.position.y, enemy.width, enemy.height, this.position.x, this.position.y, this.oldpositon.x, this.oldpositon.y)) {
         if (enemies[i].health < this.damage) {
           money += enemies[i].health
           this.damage -= enemies[i].health
@@ -543,10 +603,10 @@ function toggleUpgrades() {
 
 var startbutton = new Button({ x: 960, y: 540, w: 100, h: 100, color: 'red', text: 'start', hovercolor: 'blue', pressedcolor: 'green', pressedfunction: startbuttonpressed })
 var autostartbutton = new Button({ x: 960, y: 500, w: 100, h: 40, color: 'lime', text: 'off', hovercolor: 'green', pressedcolor: 'blue', pressedfunction: toggleAutoStart })
-var tower1button = new Button({ x: 960, y: 0, w: 100, h: 100, color: 'lime', text: 'tower1', hovercolor: 'green', pressedcolor: 'blue', pressedfunction: placetower1 })
-var tower2button = new Button({ x: 960, y: 100, w: 100, h: 100, color: 'lime', text: 'tower2', hovercolor: 'green', pressedcolor: 'blue', pressedfunction: placetower2 })
-var tower3button = new Button({ x: 960, y: 200, w: 100, h: 100, color: 'lime', text: 'tower3', hovercolor: 'green', pressedcolor: 'blue', pressedfunction: placetower3 })
-var tower4button = new Button({ x: 960, y: 300, w: 100, h: 100, color: 'lime', text: 'tower4', hovercolor: 'green', pressedcolor: 'blue', pressedfunction: placetower4 })
+var tower1button = new Button({ x: 960, y: 0, w: 100, h: 100, color: 'lime', text: towerNames[1], hovercolor: 'green', pressedcolor: 'blue', pressedfunction: placetower1 })
+var tower2button = new Button({ x: 960, y: 100, w: 100, h: 100, color: 'lime', text: towerNames[2], hovercolor: 'green', pressedcolor: 'blue', pressedfunction: placetower2 })
+var tower3button = new Button({ x: 960, y: 200, w: 100, h: 100, color: 'lime', text: towerNames[3], hovercolor: 'green', pressedcolor: 'blue', pressedfunction: placetower3 })
+var tower4button = new Button({ x: 960, y: 300, w: 100, h: 100, color: 'lime', text: towerNames[4], hovercolor: 'green', pressedcolor: 'blue', pressedfunction: placetower4 })
 var upgradesbutton = new Button({ x: 960, y: 400, w: 100, h: 100, color: 'lime', text: 'upgrades', hovercolor: 'green', pressedcolor: 'blue', pressedfunction: toggleUpgrades })
 buttons.push(startbutton)
 buttons.push(autostartbutton)
@@ -556,8 +616,65 @@ buttons.push(tower3button)
 buttons.push(tower4button)
 buttons.push(upgradesbutton)
 
+var upgradeNames = [[], 
+['faster', 'range', 'double shot', 'triple shot', '+2 damage', '+2 damage', ' shotgun'], 
+['faster', 'pre round preparation', ' stun', 'longer stun', '+2 damage', '+3 damage', ' seeking'], 
+['range', 'range', 'faster', '+2 damage', '+1 damage', '+1 damage', 'no cooldown'], []]
+
 function upgrade(upgrade) {
   upgrades[towerBeingUpgraded][upgrade] = 1
+  //update damages
+  if ((upgrade == 4 || upgrade == 5) && towerBeingUpgraded == 1) {
+    towerDamage[1] += 2
+  }
+  if ((upgrade == 4) && towerBeingUpgraded == 2) {
+    towerDamage[2] += 2
+  }
+  if ((upgrade == 5) && towerBeingUpgraded == 2) {
+    towerDamage[2] += 3
+  }
+  if ((upgrade == 4 || upgrade == 5) && towerBeingUpgraded == 3) {
+    towerDamage[3] += 1
+  }
+  if ((upgrade == 3) && towerBeingUpgraded == 3) {
+    towerDamage[3] += 2
+  }
+  //update ranges
+  if ((upgrade == 1) && towerBeingUpgraded == 1) {
+    towerRanges[1] += 100
+  }
+  if ((upgrade == 0 || upgrade == 1) && towerBeingUpgraded == 3) {
+    towerDamage[3] += 100
+  }
+  //update speeds
+  if ((upgrade == 0) && towerBeingUpgraded == 1) {
+    towerSpeeds[1] /= 2
+  }
+  if ((upgrade == 0) && towerBeingUpgraded == 2) {
+    towerSpeeds[2] /= 2
+  }
+  if ((upgrade == 2) && towerBeingUpgraded == 3) {
+    towerSpeeds[3] /= 2
+  }
+  if (upgrade == 6 && towerBeingUpgraded == 3) {
+    towerSpeeds[3] = 1
+  }
+  //update existing towers
+  for (let i in towers) {
+    let tower = towers[i]
+    tower.damage = towerDamage[tower.type]
+    tower.range = towerRanges[tower.type]
+    tower.speed = towerSpeeds[tower.type]
+  }
+}
+
+function changeUpgradeTower(number) {
+  towerBeingUpgraded += number
+  if (towerBeingUpgraded < 1) {
+    towerBeingUpgraded = towerNames.length - 2
+  } else if (towerBeingUpgraded > towerNames.length - 2) {
+    towerBeingUpgraded = 1
+  }
 }
 
 var smallupgrade1 = new UpgradeButton({x: 135, y: 255, r: 42, color: 'lime', text: 'faster', pressedfunction: 'upgrade(0)'})
@@ -567,7 +684,9 @@ var smallupgrade4 = new UpgradeButton({x: 480, y: 400, r: 42, color: 'green', te
 var smallupgrade5 = new UpgradeButton({x: 825, y: 255, r: 42, color: 'lime', text: '+2 damage', pressedfunction: 'upgrade(4)'})
 var smallupgrade6 = new UpgradeButton({x: 825, y: 400, r: 42, color: 'green', text: '+2 damage', pressedfunction: 'upgrade(5)'})
 var finalupgrade = new UpgradeButton({x: 480, y: 570, r: 65, color: 'green', text: 'Shotgun', pressedfunction: 'upgrade(6)'})
-var exitupgrades = new Button({x: 0, y: 0, w: 50, h: 50, color: 'red', hovercolor: 'dark red', pressedcolor: 'red', pressedfunction: toggleUpgrades})
+var exitupgrades = new Button({x: 0, y: 0, w: 50, h: 50, color: 'red', hovercolor: 'darkred', pressedcolor: 'red', text: '  X', pressedfunction: toggleUpgrades})
+var arrowRight = new Button({x: 555, y: 45, w: 50, h: 50, color: 'red', hovercolor: 'darkred', pressedcolor: 'red', text: ' =>', pressedfunction: 'changeUpgradeTower(1)'})
+var arrowLeft = new Button({x: 355, y: 45, w: 50, h: 50, color: 'red', hovercolor: 'darkred', pressedcolor: 'red', text: ' <=', pressedfunction: 'changeUpgradeTower(-1)'})
 upgradeButtons.push(smallupgrade1, smallupgrade2, smallupgrade3, smallupgrade4, smallupgrade5, smallupgrade6, finalupgrade)
 
 var map = new Image()
@@ -655,8 +774,14 @@ function mainloop() {
 
   for (let i in upgradeButtons) {
     let button = upgradeButtons[i]
+    button.text = upgradeNames[towerBeingUpgraded][i]
     if (i == 6) {
       if (!upgrades[towerBeingUpgraded].includes(0)) {button.active = true} else {button.active = false}
+      if (upgrades[towerBeingUpgraded][i] == -1) {
+        button.purchased = false
+      } else {
+        button.purchased = true
+      }
       button.update()
       break
     }
@@ -665,8 +790,23 @@ function mainloop() {
     } else {
       button.active = true
     }
+    if (upgrades[towerBeingUpgraded][i] == 0) {
+      button.purchased = false
+    } else {
+      button.purchased = true
+    }
     button.update()
   }
+  exitupgrades.update()
+  arrowRight.update()
+  arrowLeft.update()
+  c.beginPath()
+  c.fillStyle = 'lime'
+  c.arc(480, 75, 65, 0, 2 * Math.PI)
+  c.fill()
+  c.closePath()
+  c.fillStyle = 'black'
+  c.fillText(towerNames[towerBeingUpgraded], 420, 80)
 }
 };
 
@@ -699,13 +839,14 @@ canvas.addEventListener('mousedown', function () {
       }
     }
   }
-  if (placingTower > 0 && validPlacement(mousex - towerSizes[placingTower], mousey - towerSizes[placingTower], towerSizes[placingTower] * 2, towerSizes[placingTower] * 2) && money >= towerCosts[placingTower]) {
-    money -= towerCosts[placingTower]
+  if (placingTower > 0 && (validPlacement(mousex - towerSizes[placingTower], mousey - towerSizes[placingTower], towerSizes[placingTower] * 2, towerSizes[placingTower] * 2) && (money >= towerCosts[placingTower] || devmode))) {
+    money -= towerCosts[placingTower] * !devmode
     towers.push(new tower({ position: { x: mousex, y: mousey }, type: placingTower }))
-    buttons.push(new Button({ x: mousex - towerSizes[placingTower], y: mousey - towerSizes[placingTower], w: towerSizes[placingTower] * 2, h: towerSizes[placingTower] * 2, color: 'lime', pressedcolor: 'lime', hovercolor: 'lime', text: '', pressedfunction: '' }))
-    buttons[buttons.length - 1].towerToSell = towers[towers.length - 1]
-    buttons[buttons.length - 1].buttonToSell = buttons[buttons.length - 1]
-    buttons[buttons.length - 1].pressedfunction = 'makesellbutton'
+    var tempButton = new Button({ x: mousex - towerSizes[placingTower], y: mousey - towerSizes[placingTower], w: towerSizes[placingTower] * 2, h: towerSizes[placingTower] * 2, color: 'lime', pressedcolor: 'lime', hovercolor: 'lime', text: '', pressedfunction: '' })
+    tempButton.towerToSell = towers[towers.length - 1]
+    tempButton.buttonToSell = buttons[buttons.length - 1]
+    tempButton.pressedfunction = 'makesellbutton'
+    buttons.push(tempButton)
     placingTower = 0
   }
   } else {
@@ -714,6 +855,15 @@ canvas.addEventListener('mousedown', function () {
     if (distance(mousex, mousey, button.x, button.y) <= button.radius) {
       button.onclick()
     }
+    }
+    if (exitupgrades.hover) {
+      exitupgrades.onclick()
+    }
+    if (arrowRight.hover) {
+      arrowRight.onclick()
+    }
+    if (arrowLeft.hover) {
+      arrowLeft.onclick()
     }
   }
 })
