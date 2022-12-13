@@ -44,7 +44,7 @@ var placingTower = 0
 var inUpgradesScreen = false
 var upgradeButtons = []
 
-var devmode = true
+var devmode = false
 
 /*
 Python code for generating rounds
@@ -225,11 +225,11 @@ class Button {
       sell(this.towerToSell, this.buttonToSell)
       return true
     } else if (this.pressedfunction == 'makesellbutton') {
-      let tempbutton = new Button({ x: this.towerToSell.position.x - towerSizes[this.towerToSell.type], y: this.towerToSell.position.y - towerSizes[this.towerToSell.type] * 1, w: towerSizes[this.towerToSell.type] * 2, h: towerSizes[this.towerToSell.type], color: "red", pressedcolor: "red", hovercolor: "red", text: " sell", pressedfunction: "" })
-      tempbutton.towerToSell = this.towerToSell
-      tempbutton.buttonToSell = this.buttonToSell
-      tempbutton.pressedfunction = sell
-      buttons.push(tempbutton)
+      let tempButton = new Button({ x: this.towerToSell.position.x - towerSizes[this.towerToSell.type], y: this.towerToSell.position.y - towerSizes[this.towerToSell.type] * 1, w: towerSizes[this.towerToSell.type] * 2, h: towerSizes[this.towerToSell.type], color: "red", pressedcolor: "red", hovercolor: "red", text: " sell", pressedfunction: "" })
+      tempButton.towerToSell = this.towerToSell
+      tempButton.buttonToSell = this.buttonToSell
+      tempButton.pressedfunction = sell
+      buttons.push(tempButton)
     } else {
       setTimeout(this.pressedfunction, 0)
     }
@@ -329,6 +329,18 @@ class tower {
         let enemy = enemies[i]
         if ((this.range >= distance(this.position.x, this.position.y, enemy.position.x, enemy.position.y)) || (this.range >= distance(this.position.x, this.position.y, enemy.position.x, enemy.position.y + enemy.height)) || (this.range >= distance(this.position.x, this.position.y, enemy.position.x + enemy.width, enemy.position.y)) || (this.range >= distance(this.position.x, this.position.y, enemy.position.x + enemy.width, enemy.position.y + enemy.height))) {
           projectiles.push(new projectile({ position: { x: this.position.x, y: this.position.y }, endpoint: { x: enemy.position.x + (enemy.velocity.x * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20), y: enemy.position.y + (enemy.velocity.y * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20) }, damage: this.damage, lifespan: this.range, type: this.type }))
+          if (this.type == 1 && upgrades[1][2] == 1) {
+            projectiles.push(new projectile({ position: { x: this.position.x, y: this.position.y }, endpoint: { x: enemy.position.x + (enemy.velocity.x * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20), y: enemy.position.y + (enemy.velocity.y * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20) }, damage: this.damage, lifespan: this.range, type: this.type, angleOffset: 0.523599}))
+          }
+          if (this.type == 1 && upgrades[1][3] == 1) {
+            projectiles.push(new projectile({ position: { x: this.position.x, y: this.position.y }, endpoint: { x: enemy.position.x + (enemy.velocity.x * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20), y: enemy.position.y + (enemy.velocity.y * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20) }, damage: this.damage, lifespan: this.range, type: this.type, angleOffset: -0.523599}))
+          }
+          if (this.type == 1 && upgrades[1][6] == 1) {
+            projectiles.push(new projectile({ position: { x: this.position.x, y: this.position.y }, endpoint: { x: enemy.position.x + (enemy.velocity.x * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20), y: enemy.position.y + (enemy.velocity.y * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20) }, damage: this.damage, lifespan: this.range, type: this.type, angleOffset: 0.174533}))
+            projectiles.push(new projectile({ position: { x: this.position.x, y: this.position.y }, endpoint: { x: enemy.position.x + (enemy.velocity.x * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20), y: enemy.position.y + (enemy.velocity.y * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20) }, damage: this.damage, lifespan: this.range, type: this.type, angleOffset: -0.174533}))
+            projectiles.push(new projectile({ position: { x: this.position.x, y: this.position.y }, endpoint: { x: enemy.position.x + (enemy.velocity.x * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20), y: enemy.position.y + (enemy.velocity.y * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20) }, damage: this.damage, lifespan: this.range, type: this.type, angleOffset: 0.349066}))
+            projectiles.push(new projectile({ position: { x: this.position.x, y: this.position.y }, endpoint: { x: enemy.position.x + (enemy.velocity.x * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20), y: enemy.position.y + (enemy.velocity.y * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20) }, damage: this.damage, lifespan: this.range, type: this.type, angleOffset: -0.349066}))
+          }
           return
         }
       }
@@ -339,17 +351,18 @@ class tower {
 }
 
 class projectile {
-  constructor({ position = { x: 0, y: 0 }, endpoint = { x: 0, y: 0 }, damage = 1, lifespan = 500, type = 0 }) {
+  constructor({ position = { x: 0, y: 0 }, endpoint = { x: 0, y: 0 }, damage = 1, lifespan = 500, type = 0, angleOffset = 0 }) {
     this.position = position
     this.oldpositon = {x: 0, y: 0}
     this.damage = damage
     this.lifespan = lifespan
+    this.angleOffset = angleOffset
     this.type = type
     this.range = 100
     this.width = 12.5
     this.height = 12.5
     this.waypointIndex = 0
-    this.speed = 0
+    this.speed = 20
     this.distanceTravelled = 0
     this.center = {
       x: this.position.x + this.width / 2,
@@ -364,7 +377,11 @@ class projectile {
     }
     this.yDistance = this.endpoint.y - this.center.y
     this.xDistance = this.endpoint.x - this.center.x
-    this.angle = Math.atan2(this.yDistance, this.xDistance)
+    this.angle = Math.atan2(this.yDistance, this.xDistance) + this.angleOffset
+    if (this.angleOffset != 0) {
+      this.endpoint.x = this.position.x + Math.cos(this.angle) * this.speed * 10
+      this.endpoint.y = this.position.y + Math.sin(this.angle) * this.speed * 10
+    }
   }
   draw() {
     c.fillStyle = 'orange'
@@ -373,7 +390,7 @@ class projectile {
   update() {
     this.draw()
 
-    if (this.type = 2) {
+    if (this.type == 2) {
       this.speed = 50 * gamespeed
     } else {
       this.speed = 20 * gamespeed
@@ -435,10 +452,10 @@ class projectile {
       return true
     }
     if (
-      Math.abs(Math.round(this.center.x) - Math.round(this.endpoint.x)) <
+      (Math.abs(Math.round(this.center.x) - Math.round(this.endpoint.x)) <
       Math.abs(this.velocity.x) &&
       Math.abs(Math.round(this.center.y) - Math.round(this.endpoint.y)) <
-      Math.abs(this.velocity.y)
+      Math.abs(this.velocity.y))// || this.angleOffset != 0
     ) {
       this.endpoint.x = this.position.x + this.velocity.x * 10
       this.endpoint.y = this.position.y + this.velocity.y * 10
@@ -581,16 +598,16 @@ function placetower4() {
   }
 }
 
-function sell(tower, button) {
+function sell(selltower, sellbutton) {
   for (let i in towers) {
-    if (towers[i] === tower) {
-      money += towerCosts[tower.type] / 2
+    if (towers[i] === selltower) {
+      money += towerCosts[selltower.type] / 2
       towers.splice(i, 1)
       break
     }
   }
   for (let i in buttons) {
-    if (buttons[i] === button) {
+    if (buttons[i] === sellbutton) {
       buttons.splice(i, 1)
       break
     }
@@ -728,6 +745,10 @@ function mainloop() {
       }
     }
   }
+  for (let i = 0; i < buttons.length; i++) {
+    let button = buttons[i]
+    button.update()
+  }
   if (lives <= 0) {
     c.font = '96px sans-serif'
     c.fillStyle = 'red'
@@ -765,9 +786,19 @@ function mainloop() {
   c.fillText("Money: " + Math.round(money), 0, 30)
   c.fillText("Lives: " + lives, 0, 70)
   c.fillText("Round: " + round, 0, 110)
-  for (let i = 0; i < buttons.length; i++) {
+  for (let i in buttons) {
+    let foundButton = false
     let button = buttons[i]
-    button.update()
+    if (button.pressedfunction == sell) {
+      for (let u in buttons) {
+        if (button.buttonToSell === buttons[u]) {
+          foundButton = true
+        }
+      }
+      if (!foundButton) {
+      buttons.splice(i, 1)
+      }
+    }
   }
 } else if (inUpgradesScreen) {
   c.drawImage(upgradesImage, 0, 0, canvas.width - 100, canvas.height)
@@ -820,12 +851,6 @@ canvas.addEventListener('mousemove', function () {
 canvas.addEventListener('mousedown', function () {
   mouseDown = true
   if (!inUpgradesScreen) {
-  for (let i in buttons) {
-    let button = buttons[i]
-    if (button.pressedfunction == sell && !isColliding(mousex, mousey, 1, 1, button.x, button.y, button.width, button.height)) {
-      buttons.splice(i, 1)
-    }
-  }
   for (let i = 0; i < buttons.length; i++) {
     let button = buttons[i]
     if (button.hover) {
@@ -839,12 +864,18 @@ canvas.addEventListener('mousedown', function () {
       }
     }
   }
+  for (let i in buttons) {
+    let button = buttons[i]
+    if (button.pressedfunction == sell && !isColliding(mousex, mousey, 1, 1, button.x, button.y, button.width, button.height)) {
+      buttons.splice(i, 1)
+    }
+  }
   if (placingTower > 0 && (validPlacement(mousex - towerSizes[placingTower], mousey - towerSizes[placingTower], towerSizes[placingTower] * 2, towerSizes[placingTower] * 2) && (money >= towerCosts[placingTower] || devmode))) {
     money -= towerCosts[placingTower] * !devmode
     towers.push(new tower({ position: { x: mousex, y: mousey }, type: placingTower }))
     var tempButton = new Button({ x: mousex - towerSizes[placingTower], y: mousey - towerSizes[placingTower], w: towerSizes[placingTower] * 2, h: towerSizes[placingTower] * 2, color: 'lime', pressedcolor: 'lime', hovercolor: 'lime', text: '', pressedfunction: '' })
     tempButton.towerToSell = towers[towers.length - 1]
-    tempButton.buttonToSell = buttons[buttons.length - 1]
+    tempButton.buttonToSell = tempButton
     tempButton.pressedfunction = 'makesellbutton'
     buttons.push(tempButton)
     placingTower = 0
