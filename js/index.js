@@ -39,12 +39,11 @@ var enemiesCooldown
 
 var gamespeed = 0
 var gameFramesPassed = 0
-var speedButtonIndex
 var placingTower = 0
 var inUpgradesScreen = false
 var upgradeButtons = []
 
-var devmode = false
+var devmode = true
 
 /*
 Python code for generating rounds
@@ -162,9 +161,22 @@ function createEnemies() {
       round += 1
       money += 100
       roundWaiting = false
+      if (upgrades[2][1] == 1) {
+      for (let i in towers) {
+        if (towers[i].type == 2) {
+          towers[i].projectileCooldown = -480
+        }
+      }
+    }
       if (!autostart) {
         gamespeed = 0
         buttons.push(startbutton)
+        for(let i in buttons) {
+          let button = buttons[i]
+          if (button === speedButton) {
+            buttons.splice(i, 1)
+          }
+        }
         projectiles = []
       }
     }
@@ -202,7 +214,8 @@ class Button {
 
     c.fillRect(this.x, this.y, this.width, this.height)
     c.fillStyle = 'black'
-    c.fillText(this.text, this.x + ((this.width / 2) - 30), this.y + ((this.height / 2) + 10))
+    c.font = `${30 - (this.text.length + 1)}px sans-serif`
+    c.fillText(this.text, this.x + ((this.width / 2) - 40), this.y + ((this.height / 2) + 10))
   }
   update() {
     if (mousex >= this.x && mousex <= this.x + this.width && mousey >= this.y && mousey <= this.y + this.height) {
@@ -345,7 +358,7 @@ class tower {
         }
       }
     } else {
-      this.projectileCooldown -= 1
+      this.projectileCooldown -= 1 * gamespeed
     }
   }
 }
@@ -396,7 +409,7 @@ class projectile {
       this.speed = 20 * gamespeed
     }
 
-    if (this.type == 2 && upgrades[2][6] == 1) {
+    if ((this.type == 2 && upgrades[2][6] == 1) || (this.type == 4)) {
     if (enemies.length > 0) {
       for (let i in enemies) {
         let enemy = enemies[i]
@@ -539,19 +552,17 @@ function startbuttonpressed() {
       buttons.splice(i, 1)
     }
   }
-  var speedButton = new Button({ x: 960, y: 540, w: 100, h: 100, color: 'red', text: 'fast', hovercolor: 'blue', pressedcolor: 'green', pressedfunction: changeSpeed })
-  speedButtonIndex = buttons.length
-  buttons.push(speedButton)
+    buttons.push(speedButton)
 }
 
 function changeSpeed() {
   if (gamespeed == 1) {
     gamespeed = 2
-    buttons[speedButtonIndex].text = 'slow'
+    speedButton.text = 'slow'
     enemiesCooldown /= 2
   } else {
     gamespeed = 1
-    buttons[speedButtonIndex].text = 'fast'
+    speedButton.text = 'fast'
     enemiesCooldown *= 2
   }
 }
@@ -559,10 +570,10 @@ function changeSpeed() {
 function toggleAutoStart() {
   if (autostart) {
     autostart = false
-    autostartbutton.text = 'off'
+    autostartbutton.text = 'autostart: off'
   } else {
     autostart = true
-    autostartbutton.text = 'on'
+    autostartbutton.text = 'autostart: on'
   }
 }
 
@@ -618,8 +629,9 @@ function toggleUpgrades() {
   inUpgradesScreen = !inUpgradesScreen
 }
 
-var startbutton = new Button({ x: 960, y: 540, w: 100, h: 100, color: 'red', text: 'start', hovercolor: 'blue', pressedcolor: 'green', pressedfunction: startbuttonpressed })
-var autostartbutton = new Button({ x: 960, y: 500, w: 100, h: 40, color: 'lime', text: 'off', hovercolor: 'green', pressedcolor: 'blue', pressedfunction: toggleAutoStart })
+const startbutton = new Button({ x: 960, y: 540, w: 100, h: 100, color: 'red', text: 'start', hovercolor: 'blue', pressedcolor: 'green', pressedfunction: startbuttonpressed })
+const speedButton = new Button({ x: 960, y: 540, w: 100, h: 100, color: 'red', text: 'fast', hovercolor: 'blue', pressedcolor: 'green', pressedfunction: changeSpeed })
+var autostartbutton = new Button({ x: 960, y: 500, w: 100, h: 40, color: 'lime', text: 'autostart: off', hovercolor: 'green', pressedcolor: 'blue', pressedfunction: toggleAutoStart })
 var tower1button = new Button({ x: 960, y: 0, w: 100, h: 100, color: 'lime', text: towerNames[1], hovercolor: 'green', pressedcolor: 'blue', pressedfunction: placetower1 })
 var tower2button = new Button({ x: 960, y: 100, w: 100, h: 100, color: 'lime', text: towerNames[2], hovercolor: 'green', pressedcolor: 'blue', pressedfunction: placetower2 })
 var tower3button = new Button({ x: 960, y: 200, w: 100, h: 100, color: 'lime', text: towerNames[3], hovercolor: 'green', pressedcolor: 'blue', pressedfunction: placetower3 })
@@ -746,6 +758,7 @@ function mainloop() {
     }
   }
   for (let i = 0; i < buttons.length; i++) {
+    c.font = '30px sans-serif'
     let button = buttons[i]
     button.update()
   }
@@ -866,7 +879,7 @@ canvas.addEventListener('mousedown', function () {
   }
   for (let i in buttons) {
     let button = buttons[i]
-    if (button.pressedfunction == sell && !isColliding(mousex, mousey, 1, 1, button.x, button.y, button.width, button.height)) {
+    if (button.pressedfunction == sell && !isColliding(mousex, mousey, 1, 1, button.x, button.y, button.width, button.height * 2)) {
       buttons.splice(i, 1)
     }
   }
