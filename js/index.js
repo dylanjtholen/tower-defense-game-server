@@ -254,6 +254,7 @@ class Enemy {
     this.width = 50
     this.height = 50
     this.waypointIndex = 0
+    this.stun = 0
     this.health = health
     this.center = {
       x: this.position.x + this.width / 2,
@@ -285,8 +286,12 @@ class Enemy {
     this.velocity.x = Math.cos(angle) * speed
     this.velocity.y = Math.sin(angle) * speed
 
+    if (this.stun <= 0) {
     this.position.x += this.velocity.x
     this.position.y += this.velocity.y
+    } else {
+      this.stun -= gamespeed
+    }
 
     this.center = {
       x: this.position.x + this.width / 2,
@@ -454,6 +459,11 @@ class projectile {
           enemies[i].health -= this.damage
           if (enemies[i].health <= 0) {
             enemies.splice(i, 1)
+          }
+          if (upgrades[2][3] == 1 && this.type == 2) {
+            enemy.stun += 60
+          } else if (upgrades[2][2] == 1 && this.type == 2) {
+            enemy.stun += 30
           }
           return true
         }
