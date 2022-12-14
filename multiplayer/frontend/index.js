@@ -72,8 +72,6 @@ function paintGame(state) {
   paintPlayer(state.players[1], size, 'red');
 }
 
-asshdui
-
 function handleInit(number) {
   playerNumber = number;
 }
