@@ -24,7 +24,8 @@ var towerRanges = [0, 200, 1000, 100, 2000]
 var towerNames = ['', 'basic', 'sniper', 'fast', 'god']
 
 var upgrades = [[], [0, 0, 0, 0, 0, 0, -1], [0, 0, 0, 0, 0, 0, -1], [0, 0, 0, 0, 0, 0, -1], [0, 0, 0, 0, 0, 0, -1]]
-var upgradeNames = [[], ['faster', 'range', 'double shot', 'triple shot', '+2 damage', '+2 damage', ' shotgun'], ['faster', 'pre round preparation', ' stun', 'longer stun', '+2 damage', '+3 damage', ' seeking'], ['range', 'range', 'faster', '+2 damage', '+1 damage', '+1 damage', 'no cooldown'], []]
+var upgradeNames = [[], ['faster', 'range', 'double shot', 'triple shot', '+2 damage', '+2 damage', ' shotgun'], ['faster', 'pre round prep', ' stun', 'longer stun', '+2 damage', '+3 damage', ' seeking'], ['range', 'range', 'faster', '+2 damage', '+1 damage', '+1 damage', 'ultra fast'], []]
+var upgradeCosts = [[], [1000, 2000, 4000, 4000, 3000, 3000, 10000], [1000, 4000, 5000, 3000, 3000, 5000, 10000], [1000, 2000, 1000, 3000, 2000, 2000, 10000], []]
 var towerBeingUpgraded = 1
 
 var lives = 100
@@ -283,10 +284,10 @@ class Enemy {
 
     const speed = 3 * gamespeed
 
+    if (this.stun <= 0) {
     this.velocity.x = Math.cos(angle) * speed
     this.velocity.y = Math.sin(angle) * speed
 
-    if (this.stun <= 0) {
     this.position.x += this.velocity.x
     this.position.y += this.velocity.y
     } else {
@@ -487,7 +488,7 @@ class projectile {
 }
 
 class UpgradeButton {
-  constructor({ x = 0, y = 0, r=0, color = 'red', text = '', pressedcolor = 'green', hovercolor = 'blue', pressedfunction = 'null' }) {
+  constructor({ x = 0, y = 0, r=0, color = 'red', text = '', pressedcolor = 'green', hovercolor = 'blue', pressedfunction = 'null', cost = 1000 }) {
     this.x = x
     this.y = y
     this.radius = r
@@ -501,8 +502,9 @@ class UpgradeButton {
     this.text = text
     this.active = true
     this.purchased = false
+    this.cost = cost
   }
-  draw() {
+  draw(fontstyle) {
 
     if (this.hover && this.clicked) {
       c.fillStyle = this.pressedcolor
@@ -517,9 +519,11 @@ class UpgradeButton {
     c.fill()
     c.closePath()
     c.fillStyle = 'black'
-    c.fillText(this.text, this.x - (this.radius), this.y + 10)
+    c.font = fontstyle || `${30 - (this.text.length / 2 + 10)}px sans-serif`
+    c.fillText(this.text, this.x - (this.radius) + 5, this.y)
+    c.fillText(this.cost, this.x - (this.radius) + 10, this.y + 20 + (10 * (fontstyle != null)))
   }
-  update() {
+  update(fontstyle) {
     if (this.active) {
       this.color = 'blue'
       this.hovercolor = 'lime'
@@ -542,7 +546,7 @@ class UpgradeButton {
     } else {
       this.declick -= 1
     }
-    this.draw()
+    this.draw(fontstyle)
   }
   onclick() {
     if (this.active) {
@@ -655,13 +659,10 @@ buttons.push(tower3button)
 buttons.push(tower4button)
 buttons.push(upgradesbutton)
 
-var upgradeNames = [[], 
-['faster', 'range', 'double shot', 'triple shot', '+2 damage', '+2 damage', ' shotgun'], 
-['faster', 'pre round preparation', ' stun', 'longer stun', '+2 damage', '+3 damage', ' seeking'], 
-['range', 'range', 'faster', '+2 damage', '+1 damage', '+1 damage', 'no cooldown'], []]
-
 function upgrade(upgrade) {
+  if (money >= towerCosts[towerBeingUpgraded][upgrade]) {
   upgrades[towerBeingUpgraded][upgrade] = 1
+  money -= upgradeCosts[towerBeingUpgraded][upgrade]
   //update damages
   if ((upgrade == 4 || upgrade == 5) && towerBeingUpgraded == 1) {
     towerDamage[1] += 2
@@ -706,6 +707,7 @@ function upgrade(upgrade) {
     tower.speed = towerSpeeds[tower.type]
   }
 }
+}
 
 function changeUpgradeTower(number) {
   towerBeingUpgraded += number
@@ -723,9 +725,9 @@ var smallupgrade4 = new UpgradeButton({x: 480, y: 400, r: 42, color: 'green', te
 var smallupgrade5 = new UpgradeButton({x: 825, y: 255, r: 42, color: 'lime', text: '+2 damage', pressedfunction: 'upgrade(4)'})
 var smallupgrade6 = new UpgradeButton({x: 825, y: 400, r: 42, color: 'green', text: '+2 damage', pressedfunction: 'upgrade(5)'})
 var finalupgrade = new UpgradeButton({x: 480, y: 570, r: 65, color: 'green', text: 'Shotgun', pressedfunction: 'upgrade(6)'})
-var exitupgrades = new Button({x: 0, y: 0, w: 50, h: 50, color: 'red', hovercolor: 'darkred', pressedcolor: 'red', text: '  X', pressedfunction: toggleUpgrades})
-var arrowRight = new Button({x: 555, y: 45, w: 50, h: 50, color: 'red', hovercolor: 'darkred', pressedcolor: 'red', text: ' =>', pressedfunction: 'changeUpgradeTower(1)'})
-var arrowLeft = new Button({x: 355, y: 45, w: 50, h: 50, color: 'red', hovercolor: 'darkred', pressedcolor: 'red', text: ' <=', pressedfunction: 'changeUpgradeTower(-1)'})
+var exitupgrades = new Button({x: 0, y: 0, w: 50, h: 50, color: 'red', hovercolor: 'darkred', pressedcolor: 'red', text: '    X', pressedfunction: toggleUpgrades})
+var arrowRight = new Button({x: 555, y: 45, w: 50, h: 50, color: 'red', hovercolor: 'darkred', pressedcolor: 'red', text: '   =>', pressedfunction: 'changeUpgradeTower(1)'})
+var arrowLeft = new Button({x: 355, y: 45, w: 50, h: 50, color: 'red', hovercolor: 'darkred', pressedcolor: 'red', text: '   <=', pressedfunction: 'changeUpgradeTower(-1)'})
 upgradeButtons.push(smallupgrade1, smallupgrade2, smallupgrade3, smallupgrade4, smallupgrade5, smallupgrade6, finalupgrade)
 
 var map = new Image()
@@ -828,6 +830,7 @@ function mainloop() {
 
   for (let i in upgradeButtons) {
     let button = upgradeButtons[i]
+    button.cost = upgradeCosts[towerBeingUpgraded][i]
     button.text = upgradeNames[towerBeingUpgraded][i]
     if (i == 6) {
       if (!upgrades[towerBeingUpgraded].includes(0)) {button.active = true} else {button.active = false}
@@ -836,7 +839,7 @@ function mainloop() {
       } else {
         button.purchased = true
       }
-      button.update()
+      button.update('30px sans-serif')
       break
     }
     if (!upgrades[towerBeingUpgraded][i - 1] == 1 && i != 0 && i != 2 && i != 4) {
@@ -860,7 +863,8 @@ function mainloop() {
   c.fill()
   c.closePath()
   c.fillStyle = 'black'
-  c.fillText(towerNames[towerBeingUpgraded], 420, 80)
+  c.fillText(towerNames[towerBeingUpgraded], 440, 80)
+  c.fillText("Money: " + Math.round(money), 60, 30)
 }
 };
 
@@ -901,7 +905,6 @@ canvas.addEventListener('mousedown', function () {
     tempButton.buttonToSell = tempButton
     tempButton.pressedfunction = 'makesellbutton'
     buttons.push(tempButton)
-    placingTower = 0
   }
   } else {
     for (let i in upgradeButtons) {
