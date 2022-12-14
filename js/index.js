@@ -661,52 +661,52 @@ buttons.push(upgradesbutton)
 
 function upgrade(upgrade) {
   if (money >= towerCosts[towerBeingUpgraded][upgrade]) {
-  upgrades[towerBeingUpgraded][upgrade] = 1
-  money -= upgradeCosts[towerBeingUpgraded][upgrade]
-  //update damages
-  if ((upgrade == 4 || upgrade == 5) && towerBeingUpgraded == 1) {
-    towerDamage[1] += 2
+    upgrades[towerBeingUpgraded][upgrade] = 1
+    money -= upgradeCosts[towerBeingUpgraded][upgrade]
+    //update damages
+    if ((upgrade == 4 || upgrade == 5) && towerBeingUpgraded == 1) {
+      towerDamage[1] += 2
+    }
+    if ((upgrade == 4) && towerBeingUpgraded == 2) {
+      towerDamage[2] += 2
+    }
+    if ((upgrade == 5) && towerBeingUpgraded == 2) {
+      towerDamage[2] += 3
+    }
+    if ((upgrade == 4 || upgrade == 5) && towerBeingUpgraded == 3) {
+      towerDamage[3] += 1
+    }
+    if ((upgrade == 3) && towerBeingUpgraded == 3) {
+      towerDamage[3] += 2
+    }
+    //update ranges
+    if ((upgrade == 1) && towerBeingUpgraded == 1) {
+      towerRanges[1] += 100
+    }
+    if ((upgrade == 0 || upgrade == 1) && towerBeingUpgraded == 3) {
+      towerDamage[3] += 100
+    }
+    //update speeds
+    if ((upgrade == 0) && towerBeingUpgraded == 1) {
+      towerSpeeds[1] /= 2
+    }
+    if ((upgrade == 0) && towerBeingUpgraded == 2) {
+      towerSpeeds[2] /= 2
+    }
+    if ((upgrade == 2) && towerBeingUpgraded == 3) {
+      towerSpeeds[3] /= 2
+    }
+    if (upgrade == 6 && towerBeingUpgraded == 3) {
+      towerSpeeds[3] = 1
+    }
+    //update existing towers
+    for (let i in towers) {
+      let tower = towers[i]
+      tower.damage = towerDamage[tower.type]
+      tower.range = towerRanges[tower.type]
+      tower.speed = towerSpeeds[tower.type]
+    }
   }
-  if ((upgrade == 4) && towerBeingUpgraded == 2) {
-    towerDamage[2] += 2
-  }
-  if ((upgrade == 5) && towerBeingUpgraded == 2) {
-    towerDamage[2] += 3
-  }
-  if ((upgrade == 4 || upgrade == 5) && towerBeingUpgraded == 3) {
-    towerDamage[3] += 1
-  }
-  if ((upgrade == 3) && towerBeingUpgraded == 3) {
-    towerDamage[3] += 2
-  }
-  //update ranges
-  if ((upgrade == 1) && towerBeingUpgraded == 1) {
-    towerRanges[1] += 100
-  }
-  if ((upgrade == 0 || upgrade == 1) && towerBeingUpgraded == 3) {
-    towerDamage[3] += 100
-  }
-  //update speeds
-  if ((upgrade == 0) && towerBeingUpgraded == 1) {
-    towerSpeeds[1] /= 2
-  }
-  if ((upgrade == 0) && towerBeingUpgraded == 2) {
-    towerSpeeds[2] /= 2
-  }
-  if ((upgrade == 2) && towerBeingUpgraded == 3) {
-    towerSpeeds[3] /= 2
-  }
-  if (upgrade == 6 && towerBeingUpgraded == 3) {
-    towerSpeeds[3] = 1
-  }
-  //update existing towers
-  for (let i in towers) {
-    let tower = towers[i]
-    tower.damage = towerDamage[tower.type]
-    tower.range = towerRanges[tower.type]
-    tower.speed = towerSpeeds[tower.type]
-  }
-}
 }
 
 function changeUpgradeTower(number) {
@@ -899,7 +899,8 @@ canvas.addEventListener('mousedown', function () {
   }
   if (placingTower > 0 && (validPlacement(mousex - towerSizes[placingTower], mousey - towerSizes[placingTower], towerSizes[placingTower] * 2, towerSizes[placingTower] * 2) && (money >= towerCosts[placingTower] || devmode))) {
     money -= towerCosts[placingTower] * !devmode
-    towers.push(new tower({ position: { x: mousex, y: mousey }, type: placingTower }))
+    let temptower = new tower({ position: { x: mousex, y: mousey }, type: placingTower })
+    
     var tempButton = new Button({ x: mousex - towerSizes[placingTower], y: mousey - towerSizes[placingTower], w: towerSizes[placingTower] * 2, h: towerSizes[placingTower] * 2, color: 'lime', pressedcolor: 'lime', hovercolor: 'lime', text: '', pressedfunction: '' })
     tempButton.towerToSell = towers[towers.length - 1]
     tempButton.buttonToSell = tempButton
