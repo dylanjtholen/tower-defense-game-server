@@ -71,15 +71,18 @@ io.on('connection', client => {
   }
 
   function handleTowerBought(tower) {
+    let roomName = clientRooms[client.id];
     state[roomName].towers.push(tower)
   }
 
   function handleMouseMove(info) {
-    state[roomName].players[info.playerNumber].x = info.x
-    state[roomName].players[info.playerNumber].y = info.y
+    let roomName = clientRooms[client.id];
+    state[roomName].players[info.playerNumber - 1].mousepos.x = info.x
+    state[roomName].players[info.playerNumber - 1].mousepos.y = info.y
   }
 
   function handleSellTower(towerToSell) {
+    let roomName = clientRooms[client.id];
     for (i in state[roomName].towers) {
       let tower = state[roomName].towers[i]
       if (tower === towerToSell) {
@@ -89,11 +92,12 @@ io.on('connection', client => {
   }
 
   function handleUpgrade(upgradeInfo) {
+    let roomName = clientRooms[client.id];
     let towerBeingUpgraded = upgradeInfo.towerBeingUpgraded
     let upgrade = upgradeInfo.upgrade
-    if (state[roomName].players[upgradeInfo.playerNumber].money >= towerCosts[towerBeingUpgraded][upgrade]) {
+    if (state[roomName].players[upgradeInfo.playerNumber - 1].money >= towerCosts[towerBeingUpgraded][upgrade]) {
         state[roomName].upgrades[towerBeingUpgraded][upgrade] = 1
-        money -= upgradeCosts[towerBeingUpgraded][upgrade]
+        state[roomName].players[upgradeInfo.playerNumber - 1].money -= upgradeCosts[towerBeingUpgraded][upgrade]
         //update damages
         if ((upgrade == 4 || upgrade == 5) && towerBeingUpgraded == 1) {
           state[roomName].towerDamage[1] += 2
@@ -144,7 +148,6 @@ io.on('connection', client => {
 function startGameInterval(roomName) {
   const intervalId = setInterval(() => {
     const gameOver = gameLoop(state[roomName]);
-    
     if (!gameOver) {
       emitGameState(roomName, state[roomName])
     } else {
