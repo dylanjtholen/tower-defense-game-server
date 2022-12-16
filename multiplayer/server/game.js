@@ -10,6 +10,9 @@ function initGame() {
 
 function createGameState() {
   return {
+    towers: [],
+    projectiles: [],
+    enemies: [],
      towerSizes: [0, 25, 20, 30, 100],
      towerSpeeds: [0, 60, 120, 10, 1],
      towerCosts: [0, 120, 220, 320, 100000],

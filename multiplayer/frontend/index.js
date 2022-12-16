@@ -10,6 +10,8 @@ let map;
 let upgradesImage;
 let bound = canvas.getBoundingClientRect();
 
+let gameState
+
 let exitupgrades
 let arrowLeft
 let arrowRight
@@ -18,6 +20,7 @@ let mouseDown;
 let mousex
 let mousey
 
+let speedButton
 const waypoints = [{ x: 0, y: 270 }, { x: 300, y: 270 }, { x: 300, y: 50 }, { x: 75, y: 50 }, { x: 75, y: 585 }, { x: 300, y: 585 }, { x: 300, y: 360 }, { x: 525, y: 360 }, { x: 525, y: 485 }, { x: 680, y: 485 }, { x: 680, y: 170 }, { x: 430, y: 170 }, { x: 430, y: 80 }, { x: 840, y: 80 }, { x: 840, y: 325 }, { x: 1000, y: 325 }]
 const collisionRectangles = [{ x: 960, y: 0, w: 100, h: 1060 }, { x: 0, y: 230, w: 350, h: 80 }, { x: 255, y: 10, w: 100, h: 300 }, { x: 35, y: 5, w: 315, h: 85 }, { x: 30, y: 5, w: 95, h: 625 }, { x: 30, y: 550, w: 325, h: 85 }, { x: 255, y: 325, w: 100, h: 305 }, { x: 260, y: 330, w: 315, h: 80 }, { x: 475, y: 330, w: 105, h: 207 }, { x: 475, y: 455, w: 260, h: 80 }, { x: 635, y: 135, w: 100, h: 405 }, { x: 385, y: 135, w: 350, h: 85 }, { x: 385, y: 35, w: 95, h: 180 }, { x: 385, y: 40, w: 510, h: 85 }, { x: 800, y: 40, w: 95, h: 340 }, { x: 800, y: 290, w: 160, h: 85 }]
 let buttons = []
@@ -46,7 +49,7 @@ let upgradeButtons = []
 
 let devmode = false
 
-const socket = io('https://3000-dylanjthole-towerdefens-d8jp7sebuhk.ws-us79.gitpod.io/');
+const socket = io('localhost:3000');
 
 socket.on('init', handleInit);
 socket.on('gameState', handleGameState);
@@ -116,7 +119,7 @@ class Button {
       sell(this.towerToSell, this.buttonToSell)
       return true
     } else if (this.pressedfunction == 'makesellbutton') {
-      let tempButton = new Button({ x: this.towerToSell.position.x - towerSizes[this.towerToSell.type], y: this.towerToSell.position.y - towerSizes[this.towerToSell.type] * 1, w: towerSizes[this.towerToSell.type] * 2, h: towerSizes[this.towerToSell.type], color: "red", pressedcolor: "red", hovercolor: "red", text: " sell", pressedfunction: "" })
+      let tempButton = new Button({ x: this.towerToSell.position.x - gameState.towerSizes[this.towerToSell.type], y: this.towerToSell.position.y - gameState.towerSizes[this.towerToSell.type] * 1, w: gameState.towerSizes[this.towerToSell.type] * 2, h: gameState.towerSizes[this.towerToSell.type], color: "red", pressedcolor: "red", hovercolor: "red", text: " sell", pressedfunction: "" })
       tempButton.towerToSell = this.towerToSell
       tempButton.buttonToSell = this.buttonToSell
       tempButton.pressedfunction = sell
@@ -199,10 +202,10 @@ class Enemy {
 class tower {
   constructor({ position = { x: 0, y: 0 }, type = 1 }) {
     this.type = type
-    this.damage = towerDamage[this.type]
-    this.range = towerRanges[this.type]
-    this.speed = towerSpeeds[this.type]
-    this.size = towerSizes[this.type]
+    this.damage = gameState.towerDamage[this.type]
+    this.range = gameState.towerRanges[this.type]
+    this.speed = gameState.towerSpeeds[this.type]
+    this.size = gameState.towerSizes[this.type]
     this.position = position
     this.width = this.size * 2
     this.height = this.size * 2
@@ -210,6 +213,10 @@ class tower {
     this.center = {
       x: this.position.x + this.width / 2,
       y: this.position.y + this.height / 2
+    }
+    this.draw = function()  {
+      c.fillStyle = 'lime'
+      c.fillRect(this.center.x - this.height, this.center.y - this.width, this.width, this.height)
     }
   }
   draw() {
@@ -219,23 +226,23 @@ class tower {
   update() {
     this.draw()
 
-    if (this.projectileCooldown <= 0 && enemies.length > 0) {
+    if (this.projectileCooldown <= 0 && gameState.enemies.length > 0) {
       this.projectileCooldown += this.speed / gamespeed
-      for (let i in enemies) {
-        let enemy = enemies[i]
+      for (let i in gameState.enemies) {
+        let enemy = gameState.enemies[i]
         if ((this.range >= distance(this.position.x, this.position.y, enemy.position.x, enemy.position.y)) || (this.range >= distance(this.position.x, this.position.y, enemy.position.x, enemy.position.y + enemy.height)) || (this.range >= distance(this.position.x, this.position.y, enemy.position.x + enemy.width, enemy.position.y)) || (this.range >= distance(this.position.x, this.position.y, enemy.position.x + enemy.width, enemy.position.y + enemy.height))) {
-          projectiles.push(new projectile({ position: { x: this.position.x, y: this.position.y }, endpoint: { x: enemy.position.x + (enemy.velocity.x * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20), y: enemy.position.y + (enemy.velocity.y * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20) }, damage: this.damage, lifespan: this.range, type: this.type }))
-          if (this.type == 1 && upgrades[1][2] == 1) {
-            projectiles.push(new projectile({ position: { x: this.position.x, y: this.position.y }, endpoint: { x: enemy.position.x + (enemy.velocity.x * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20), y: enemy.position.y + (enemy.velocity.y * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20) }, damage: this.damage, lifespan: this.range, type: this.type, angleOffset: 0.523599}))
+          gameState.projectiles.push(new projectile({ position: { x: this.position.x, y: this.position.y }, endpoint: { x: enemy.position.x + (enemy.velocity.x * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20), y: enemy.position.y + (enemy.velocity.y * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20) }, damage: this.damage, lifespan: this.range, type: this.type }))
+          if (this.type == 1 && gameState.upgrades[1][2] == 1) {
+            gameState.projectiles.push(new projectile({ position: { x: this.position.x, y: this.position.y }, endpoint: { x: enemy.position.x + (enemy.velocity.x * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20), y: enemy.position.y + (enemy.velocity.y * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20) }, damage: this.damage, lifespan: this.range, type: this.type, angleOffset: 0.523599}))
           }
-          if (this.type == 1 && upgrades[1][3] == 1) {
-            projectiles.push(new projectile({ position: { x: this.position.x, y: this.position.y }, endpoint: { x: enemy.position.x + (enemy.velocity.x * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20), y: enemy.position.y + (enemy.velocity.y * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20) }, damage: this.damage, lifespan: this.range, type: this.type, angleOffset: -0.523599}))
+          if (this.type == 1 && gameState.upgrades[1][3] == 1) {
+            gameState.projectiles.push(new projectile({ position: { x: this.position.x, y: this.position.y }, endpoint: { x: enemy.position.x + (enemy.velocity.x * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20), y: enemy.position.y + (enemy.velocity.y * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20) }, damage: this.damage, lifespan: this.range, type: this.type, angleOffset: -0.523599}))
           }
-          if (this.type == 1 && upgrades[1][6] == 1) {
-            projectiles.push(new projectile({ position: { x: this.position.x, y: this.position.y }, endpoint: { x: enemy.position.x + (enemy.velocity.x * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20), y: enemy.position.y + (enemy.velocity.y * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20) }, damage: this.damage, lifespan: this.range, type: this.type, angleOffset: 0.174533}))
-            projectiles.push(new projectile({ position: { x: this.position.x, y: this.position.y }, endpoint: { x: enemy.position.x + (enemy.velocity.x * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20), y: enemy.position.y + (enemy.velocity.y * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20) }, damage: this.damage, lifespan: this.range, type: this.type, angleOffset: -0.174533}))
-            projectiles.push(new projectile({ position: { x: this.position.x, y: this.position.y }, endpoint: { x: enemy.position.x + (enemy.velocity.x * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20), y: enemy.position.y + (enemy.velocity.y * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20) }, damage: this.damage, lifespan: this.range, type: this.type, angleOffset: 0.349066}))
-            projectiles.push(new projectile({ position: { x: this.position.x, y: this.position.y }, endpoint: { x: enemy.position.x + (enemy.velocity.x * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20), y: enemy.position.y + (enemy.velocity.y * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20) }, damage: this.damage, lifespan: this.range, type: this.type, angleOffset: -0.349066}))
+          if (this.type == 1 && gameState.upgrades[1][6] == 1) {
+            gameState.projectiles.push(new projectile({ position: { x: this.position.x, y: this.position.y }, endpoint: { x: enemy.position.x + (enemy.velocity.x * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20), y: enemy.position.y + (enemy.velocity.y * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20) }, damage: this.damage, lifespan: this.range, type: this.type, angleOffset: 0.174533}))
+            gameState.projectiles.push(new projectile({ position: { x: this.position.x, y: this.position.y }, endpoint: { x: enemy.position.x + (enemy.velocity.x * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20), y: enemy.position.y + (enemy.velocity.y * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20) }, damage: this.damage, lifespan: this.range, type: this.type, angleOffset: -0.174533}))
+            gameState.projectiles.push(new projectile({ position: { x: this.position.x, y: this.position.y }, endpoint: { x: enemy.position.x + (enemy.velocity.x * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20), y: enemy.position.y + (enemy.velocity.y * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20) }, damage: this.damage, lifespan: this.range, type: this.type, angleOffset: 0.349066}))
+            gameState.projectiles.push(new projectile({ position: { x: this.position.x, y: this.position.y }, endpoint: { x: enemy.position.x + (enemy.velocity.x * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20), y: enemy.position.y + (enemy.velocity.y * distance(this.position.x, this.position.y, enemy.center.x, enemy.center.y) / 20) }, damage: this.damage, lifespan: this.range, type: this.type, angleOffset: -0.349066}))
           }
           return
         }
@@ -292,10 +299,10 @@ class projectile {
       this.speed = 20 * gamespeed
     }
 
-    if ((this.type == 2 && upgrades[2][6] == 1) || (this.type == 4)) {
-    if (enemies.length > 0) {
-      for (let i in enemies) {
-        let enemy = enemies[i]
+    if ((this.type == 2 && gameState.upgrades[2][6] == 1) || (this.type == 4)) {
+    if (gameState.enemies.length > 0) {
+      for (let i in gameState.enemies) {
+        let enemy = gameState.enemies[i]
         let lowestDistance = 9999999
         if (distance(this.position.x, this.position.y, enemy.position.x, enemy.position.y) < lowestDistance) {
           this.endpoint.x = enemy.center.x
@@ -322,25 +329,25 @@ class projectile {
       y: this.position.y + this.height / 2
     }
 
-    for (let i = 0; i < enemies.length; i++) {
-      let enemy = enemies[i]
+    for (let i = 0; i < gameState.enemies.length; i++) {
+      let enemy = gameState.enemies[i]
       if (isColliding(this.position.x, this.position.y, this.width, this.height, enemy.position.x, enemy.position.y, enemy.width, enemy.height) || rectLineIntersection(enemy.position.x, enemy.position.y, enemy.width, enemy.height, this.position.x, this.position.y, this.oldpositon.x, this.oldpositon.y)) {
-        if (enemies[i].health < this.damage) {
-          money += enemies[i].health
-          this.damage -= enemies[i].health
-          enemies[i].health -= this.damage
-          enemies.splice(i, 1)
+        if (gameState.enemies[i].health < this.damage) {
+          money += gameState.enemies[i].health
+          this.damage -= gameState.enemies[i].health
+          gameState.enemies[i].health -= this.damage
+          gameState.enemies.splice(i, 1)
           this.endpoint.x = this.position.x + this.velocity.x * 10
           this.endpoint.y = this.position.y + this.velocity.y * 10
         } else {
           money += this.damage
-          enemies[i].health -= this.damage
-          if (enemies[i].health <= 0) {
-            enemies.splice(i, 1)
+          gameState.enemies[i].health -= this.damage
+          if (gameState.enemies[i].health <= 0) {
+            gameState.enemies.splice(i, 1)
           }
-          if (upgrades[2][3] == 1 && this.type == 2) {
+          if (gameState.upgrades[2][3] == 1 && this.type == 2) {
             enemy.stun += 60
-          } else if (upgrades[2][2] == 1 && this.type == 2) {
+          } else if (gameState.upgrades[2][2] == 1 && this.type == 2) {
             enemy.stun += 30
           }
           return true
@@ -465,12 +472,12 @@ canvas.addEventListener('mousedown', function () {
       buttons.splice(i, 1)
     }
   }
-  if (placingTower > 0 && (validPlacement(mousex - towerSizes[placingTower], mousey - towerSizes[placingTower], towerSizes[placingTower] * 2, towerSizes[placingTower] * 2) && (money >= towerCosts[placingTower] || devmode))) {
-    money -= towerCosts[placingTower] * !devmode
+  if (placingTower > 0 && (validPlacement(mousex - gameState.towerSizes[placingTower], mousey - gameState.towerSizes[placingTower], gameState.towerSizes[placingTower] * 2, gameState.towerSizes[placingTower] * 2) && (money >= gameState.towerCosts[placingTower] || devmode))) {
+    money -= gameState.towerCosts[placingTower] * !devmode
     let temptower = new tower({ position: { x: mousex, y: mousey }, type: placingTower })
     socket.emit('towerBought', temptower)
-    var tempButton = new Button({ x: mousex - towerSizes[placingTower], y: mousey - towerSizes[placingTower], w: towerSizes[placingTower] * 2, h: towerSizes[placingTower] * 2, color: 'lime', pressedcolor: 'lime', hovercolor: 'lime', text: '', pressedfunction: '' })
-    tempButton.towerToSell = towers[towers.length - 1]
+    var tempButton = new Button({ x: mousex - gameState.towerSizes[placingTower], y: mousey - gameState.towerSizes[placingTower], w: gameState.towerSizes[placingTower] * 2, h: gameState.towerSizes[placingTower] * 2, color: 'lime', pressedcolor: 'lime', hovercolor: 'lime', text: '', pressedfunction: '' })
+    tempButton.towerToSell = gameState.towers[gameState.towers.length - 1]
     tempButton.buttonToSell = tempButton
     tempButton.pressedfunction = 'makesellbutton'
     buttons.push(tempButton)
@@ -518,6 +525,22 @@ function init() {
 
   c.fillStyle = 'black';
   c.fillRect(0, 0, canvas.width, canvas.height);
+
+  const startbutton = new Button({ x: 960, y: 540, w: 100, h: 100, color: 'red', text: 'start', hovercolor: 'blue', pressedcolor: 'green', pressedfunction: startbuttonpressed })
+  speedButton = new Button({ x: 960, y: 540, w: 100, h: 100, color: 'red', text: 'fast', hovercolor: 'blue', pressedcolor: 'green', pressedfunction: changeSpeed })
+var autostartbutton = new Button({ x: 960, y: 500, w: 100, h: 40, color: 'lime', text: 'autostart: off', hovercolor: 'green', pressedcolor: 'blue', pressedfunction: toggleAutoStart })
+var tower1button = new Button({ x: 960, y: 0, w: 100, h: 100, color: 'lime', text: towerNames[1], hovercolor: 'green', pressedcolor: 'blue', pressedfunction: placetower1 })
+var tower2button = new Button({ x: 960, y: 100, w: 100, h: 100, color: 'lime', text: towerNames[2], hovercolor: 'green', pressedcolor: 'blue', pressedfunction: placetower2 })
+var tower3button = new Button({ x: 960, y: 200, w: 100, h: 100, color: 'lime', text: towerNames[3], hovercolor: 'green', pressedcolor: 'blue', pressedfunction: placetower3 })
+var tower4button = new Button({ x: 960, y: 300, w: 100, h: 100, color: 'lime', text: towerNames[4], hovercolor: 'green', pressedcolor: 'blue', pressedfunction: placetower4 })
+var upgradesbutton = new Button({ x: 960, y: 400, w: 100, h: 100, color: 'lime', text: 'gameState.upgrades', hovercolor: 'green', pressedcolor: 'blue', pressedfunction: toggleUpgrades })
+buttons.push(startbutton)
+buttons.push(autostartbutton)
+buttons.push(tower1button)
+buttons.push(tower2button)
+buttons.push(tower3button)
+buttons.push(tower4button)
+buttons.push(upgradesbutton)
 
   var smallupgrade1 = new UpgradeButton({x: 135, y: 255, r: 42, color: 'lime', text: 'faster', pressedfunction: 'upgrade(0)'})
 var smallupgrade2 = new UpgradeButton({x: 135, y: 400, r: 42, color: 'green', text: 'range', pressedfunction: 'upgrade(1)'})
@@ -593,15 +616,15 @@ function findPos(obj) {
   
   function validPlacement(x, y, w, h) {
     let valid = true
-    for (let i in towers) {
-      let tower = towers[i]
-      if (isColliding(towers[i].position.x - tower.size, towers[i].position.y - tower.size, tower.size * 2, tower.size * 2, x, y, w, h)) {
+    for (let i in gameState.towers) {
+      let tower = gameState.towers[i]
+      if (isColliding(gameState.towers[i].position.x - tower.size, gameState.towers[i].position.y - tower.size, tower.size * 2, tower.size * 2, x, y, w, h)) {
         valid = false
       }
     }
-    for (let i in towers) {
-      let tower = towers[i]
-      if (isColliding(x, y, w, h, towers[i].position.x - tower.size, towers[i].position.y - tower.size, tower.size * 2, tower.size * 2)) {
+    for (let i in gameState.towers) {
+      let tower = gameState.towers[i]
+      if (isColliding(x, y, w, h, gameState.towers[i].position.x - tower.size, gameState.towers[i].position.y - tower.size, tower.size * 2, tower.size * 2)) {
         valid = false
       }
     }
@@ -687,9 +710,9 @@ function findPos(obj) {
   }
   
   function sell(selltower, sellbutton) {
-    for (let i in towers) {
-      if (towers[i] === selltower) {
-        money += towerCosts[selltower.type] / 2
+    for (let i in gameState.towers) {
+      if (gameState.towers[i] === selltower) {
+        money += gameState.towerCosts[selltower.type] / 2
         socket.emit('sellTower', selltower)
         break
       }
@@ -725,29 +748,30 @@ function keydown(e) {
 }
 
 function drawGame(state) {
+  gameState = state
     c.clearRect(0, 0, canvas.width, canvas.height);
     if (/*!inUpgradesScreen*/true) {
     //gameFramesPassed += gamespeed
     c.fillStyle = 'red'
     c.drawImage(map, 0, 0, canvas.width - 100, canvas.height);
-    /*
-    for (let i = enemies.length - 1; i >= 0; i--) {
-      let enemy = enemies[i]
+    
+    for (let i = gameState.enemies.length - 1; i >= 0; i--) {
+      let enemy = gameState.enemies[i]
       enemy.draw()
     }
-    if (towers.length > 0) {
-      for (let i = 0; i < towers.length; i++) {
-        let tower = towers[i]
+    if (gameState.towers.length > 0) {
+      for (let i = 0; i < gameState.towers.length; i++) {
+        let tower = gameState.towers[i]
         tower.draw()
       }
     }
-    if (projectiles.length > 0) {
-      for (let i = 0; i < projectiles.length; i++) {
-        let projectile = projectiles[i]
+    if (gameState.projectiles.length > 0) {
+      for (let i = 0; i < gameState.projectiles.length; i++) {
+        let projectile = gameState.projectiles[i]
         projectile.draw()
       }
     }
-    */
+    
    
     for (let i = 0; i < buttons.length; i++) {
       c.font = '30px sans-serif'
@@ -784,14 +808,14 @@ function drawGame(state) {
       }
     }
     c.fillStyle = 'lime'
-    if (!validPlacement(mousex - towerSizes[placingTower], mousey - towerSizes[placingTower], towerSizes[placingTower] * 2, towerSizes[placingTower] * 2)) {
+    if (!validPlacement(mousex - gameState.towerSizes[placingTower], mousey - gameState.towerSizes[placingTower], gameState.towerSizes[placingTower] * 2, gameState.towerSizes[placingTower] * 2)) {
       c.fillStyle = 'red'
     }
     //-----UI ELEMENTS-----
     if (placingTower > 0) {
-      c.fillRect(mousex - towerSizes[placingTower], mousey - towerSizes[placingTower], towerSizes[placingTower] * 2, towerSizes[placingTower] * 2)
+      c.fillRect(mousex - gameState.towerSizes[placingTower], mousey - gameState.towerSizes[placingTower], gameState.towerSizes[placingTower] * 2, gameState.towerSizes[placingTower] * 2)
       c.beginPath()
-      c.arc(mousex, mousey, towerRanges[placingTower], 0, 2 * Math.PI)
+      c.arc(mousex, mousey, gameState.towerRanges[placingTower], 0, 2 * Math.PI)
       c.fillStyle = 'rgba(240, 248, 255, 0.05)'
       c.fill()
       c.fillStyle = 'rgb(240, 248, 255)'
@@ -811,8 +835,8 @@ function drawGame(state) {
       button.cost = upgradeCosts[towerBeingUpgraded][i]
       button.text = upgradeNames[towerBeingUpgraded][i]
       if (i == 6) {
-        if (!upgrades[towerBeingUpgraded].includes(0)) {button.active = true} else {button.active = false}
-        if (upgrades[towerBeingUpgraded][i] == -1) {
+        if (!gameState.upgrades[towerBeingUpgraded].includes(0)) {button.active = true} else {button.active = false}
+        if (gameState.upgrades[towerBeingUpgraded][i] == -1) {
           button.purchased = false
         } else {
           button.purchased = true
@@ -820,12 +844,12 @@ function drawGame(state) {
         button.update('30px sans-serif')
         break
       }
-      if (!upgrades[towerBeingUpgraded][i - 1] == 1 && i != 0 && i != 2 && i != 4) {
+      if (!gameState.upgrades[towerBeingUpgraded][i - 1] == 1 && i != 0 && i != 2 && i != 4) {
         button.active = false
       } else {
         button.active = true
       }
-      if (upgrades[towerBeingUpgraded][i] == 0) {
+      if (gameState.upgrades[towerBeingUpgraded][i] == 0) {
         button.purchased = false
       } else {
         button.purchased = true
