@@ -52,9 +52,9 @@ io.on('connection', client => {
     client.join(roomName);
     client.number = 2;
     client.emit('init', 2);
-    
     startGameInterval(roomName);
-  }
+    console.log('started game: ' + roomName)
+      }
 
   function handleNewGame() {
     console.log('making new game')
@@ -77,8 +77,13 @@ io.on('connection', client => {
 
   function handleMouseMove(info) {
     let roomName = clientRooms[client.id];
+    try {
     state[roomName].players[info.playerNumber - 1].mousepos.x = info.x
     state[roomName].players[info.playerNumber - 1].mousepos.y = info.y
+    }
+    catch(err) {
+      console.log(`Room ${roomName} seems to be closed`)
+    }
   }
 
   function handleSellTower(towerToSell) {
