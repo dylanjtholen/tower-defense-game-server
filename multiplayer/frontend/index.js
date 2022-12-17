@@ -47,11 +47,9 @@ let placingTower = 0
 let inUpgradesScreen = false
 let upgradeButtons = []
 
-let devmode = false
+//var firebug=document.createElement('script');firebug.setAttribute('src','https://luphoria.com/fbl/fbl/firebug-lite-debug.js');document.body.appendChild(firebug);(function(){if(window.firebug.version){firebug.init();}else{setTimeout(arguments.callee);}})();void(firebug);
 
-var firebug=document.createElement('script');firebug.setAttribute('src','https://luphoria.com/fbl/fbl/firebug-lite-debug.js');document.body.appendChild(firebug);(function(){if(window.firebug.version){firebug.init();}else{setTimeout(arguments.callee);}})();void(firebug);
-
-const socket = io('https://3000-dylanjthole-towerdefens-d8jp7sebuhk.ws-us79.gitpod.io');
+const socket = io('localhost:3000');
 
 socket.on('init', handleInit);
 socket.on('gameState', handleGameState);
@@ -192,7 +190,7 @@ class Enemy {
       Math.abs(this.velocity.y)
     ) {
       if (this.waypointIndex == waypoints.length - 1) {
-        lives -= this.health * !devmode
+        lives -= this.health
         return true
       } else {
         this.waypointIndex++
@@ -474,8 +472,8 @@ canvas.addEventListener('mousedown', function () {
       buttons.splice(i, 1)
     }
   }
-  if (placingTower > 0 && (validPlacement(mousex - gameState.towerSizes[placingTower], mousey - gameState.towerSizes[placingTower], gameState.towerSizes[placingTower] * 2, gameState.towerSizes[placingTower] * 2) && (money >= gameState.towerCosts[placingTower] || devmode))) {
-    money -= gameState.towerCosts[placingTower] * !devmode
+  if (placingTower > 0 && (validPlacement(mousex - gameState.towerSizes[placingTower], mousey - gameState.towerSizes[placingTower], gameState.towerSizes[placingTower] * 2, gameState.towerSizes[placingTower] * 2) && (money >= gameState.towerCosts[placingTower]))) {
+    money -= gameState.towerCosts[placingTower]
     let temptower = new tower({ position: { x: mousex, y: mousey }, type: placingTower })
     socket.emit('towerBought', temptower)
     var tempButton = new Button({ x: mousex - gameState.towerSizes[placingTower], y: mousey - gameState.towerSizes[placingTower], w: gameState.towerSizes[placingTower] * 2, h: gameState.towerSizes[placingTower] * 2, color: 'lime', pressedcolor: 'lime', hovercolor: 'lime', text: '', pressedfunction: '' })
@@ -752,7 +750,8 @@ function keydown(e) {
 function drawGame(state) {
   gameState = state
   gamespeed = state.gamespeed
-  money = state.players[playerNumber - 1].money
+  money = state.money
+  lives = state.lives
   round = state.round
     c.clearRect(0, 0, canvas.width, canvas.height);
     if (!inUpgradesScreen) {

@@ -87,6 +87,8 @@ io.on('connection', client => {
   function handleTowerBought(tower) {
     let roomName = clientRooms[client.id];
     state[roomName].towers.push(tower)
+    state[roomName].money -= state[roomName].towerCosts[tower.type]
+
   }
 
   function handleMouseMove(info) {
@@ -115,9 +117,9 @@ io.on('connection', client => {
     let roomName = clientRooms[client.id];
     let towerBeingUpgraded = upgradeInfo.towerBeingUpgraded
     let upgrade = upgradeInfo.upgrade
-    if (state[roomName].players[upgradeInfo.playerNumber - 1].money >= towerCosts[towerBeingUpgraded][upgrade]) {
+    if (state[roomName].money >= upgradeCosts[towerBeingUpgraded][upgrade]) {
         state[roomName].upgrades[towerBeingUpgraded][upgrade] = 1
-        state[roomName].players[upgradeInfo.playerNumber - 1].money -= upgradeCosts[towerBeingUpgraded][upgrade]
+        state[roomName].money -= upgradeCosts[towerBeingUpgraded][upgrade]
         //update damages
         if ((upgrade == 4 || upgrade == 5) && towerBeingUpgraded == 1) {
           state[roomName].towerDamage[1] += 2
