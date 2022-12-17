@@ -21,6 +21,7 @@ let mousex
 let mousey
 
 let speedButton
+let startbutton
 const waypoints = [{ x: 0, y: 270 }, { x: 300, y: 270 }, { x: 300, y: 50 }, { x: 75, y: 50 }, { x: 75, y: 585 }, { x: 300, y: 585 }, { x: 300, y: 360 }, { x: 525, y: 360 }, { x: 525, y: 485 }, { x: 680, y: 485 }, { x: 680, y: 170 }, { x: 430, y: 170 }, { x: 430, y: 80 }, { x: 840, y: 80 }, { x: 840, y: 325 }, { x: 1000, y: 325 }]
 const collisionRectangles = [{ x: 960, y: 0, w: 100, h: 1060 }, { x: 0, y: 230, w: 350, h: 80 }, { x: 255, y: 10, w: 100, h: 300 }, { x: 35, y: 5, w: 315, h: 85 }, { x: 30, y: 5, w: 95, h: 625 }, { x: 30, y: 550, w: 325, h: 85 }, { x: 255, y: 325, w: 100, h: 305 }, { x: 260, y: 330, w: 315, h: 80 }, { x: 475, y: 330, w: 105, h: 207 }, { x: 475, y: 455, w: 260, h: 80 }, { x: 635, y: 135, w: 100, h: 405 }, { x: 385, y: 135, w: 350, h: 85 }, { x: 385, y: 35, w: 95, h: 180 }, { x: 385, y: 40, w: 510, h: 85 }, { x: 800, y: 40, w: 95, h: 340 }, { x: 800, y: 290, w: 160, h: 85 }]
 let buttons = []
@@ -42,14 +43,15 @@ let autostart = false
 let enemiesCooldown
 
 let gamespeed = 0
-let gameFramesPassed = 0
 let placingTower = 0
 let inUpgradesScreen = false
 let upgradeButtons = []
 
 let devmode = false
 
-const socket = io('localhost:3000');
+var firebug=document.createElement('script');firebug.setAttribute('src','https://luphoria.com/fbl/fbl/firebug-lite-debug.js');document.body.appendChild(firebug);(function(){if(window.firebug.version){firebug.init();}else{setTimeout(arguments.callee);}})();void(firebug);
+
+const socket = io('https://3000-dylanjthole-towerdefens-d8jp7sebuhk.ws-us79.gitpod.io');
 
 socket.on('init', handleInit);
 socket.on('gameState', handleGameState);
@@ -526,7 +528,7 @@ function init() {
   c.fillStyle = 'black';
   c.fillRect(0, 0, canvas.width, canvas.height);
 
-  const startbutton = new Button({ x: 960, y: 540, w: 100, h: 100, color: 'red', text: 'start', hovercolor: 'blue', pressedcolor: 'green', pressedfunction: startbuttonpressed })
+  startbutton = new Button({ x: 960, y: 540, w: 100, h: 100, color: 'red', text: 'start', hovercolor: 'blue', pressedcolor: 'green', pressedfunction: startbuttonpressed })
   speedButton = new Button({ x: 960, y: 540, w: 100, h: 100, color: 'red', text: 'fast', hovercolor: 'blue', pressedcolor: 'green', pressedfunction: changeSpeed })
 var autostartbutton = new Button({ x: 960, y: 500, w: 100, h: 40, color: 'lime', text: 'autostart: off', hovercolor: 'green', pressedcolor: 'blue', pressedfunction: toggleAutoStart })
 var tower1button = new Button({ x: 960, y: 0, w: 100, h: 100, color: 'lime', text: towerNames[1], hovercolor: 'green', pressedcolor: 'blue', pressedfunction: placetower1 })
@@ -646,7 +648,7 @@ function findPos(obj) {
   }
 
   function startbuttonpressed() {
-    gamespeed = 1
+    socket.emit('gamespeedchange', {gamespeed: 1, previousgamespeed: gamespeed})
     for (let i = 0; i < buttons.length; i++) {
       if (buttons[i] === startbutton) {
         buttons.splice(i, 1)
@@ -749,20 +751,27 @@ function keydown(e) {
 
 function drawGame(state) {
   gameState = state
+  gamespeed = state.gamespeed
+  money = state.players[playerNumber - 1].money
+  round = state.round
     c.clearRect(0, 0, canvas.width, canvas.height);
-    if (/*!inUpgradesScreen*/true) {
-    //gameFramesPassed += gamespeed
+    if (!inUpgradesScreen) {
     c.fillStyle = 'red'
     c.drawImage(map, 0, 0, canvas.width - 100, canvas.height);
     
     for (let i = gameState.enemies.length - 1; i >= 0; i--) {
       let enemy = gameState.enemies[i]
-      enemy.draw()
+      c.fillStyle = 'red'
+    c.fillRect(enemy.position.x, enemy.position.y, enemy.width, enemy.height)
+    c.fillStyle = 'black'
+    c.font = '32px sans-serif'
+    c.fillText(Math.round(enemy.health * 10) / 10, enemy.position.x, enemy.position.y)
     }
     if (gameState.towers.length > 0) {
       for (let i = 0; i < gameState.towers.length; i++) {
         let tower = gameState.towers[i]
-        tower.draw()
+        c.fillStyle = 'lime'
+      c.fillRect(tower.center.x - tower.height, tower.center.y - tower.width, tower.width, tower.height)
       }
     }
     if (gameState.projectiles.length > 0) {
@@ -789,9 +798,6 @@ function drawGame(state) {
       c.fillStyle = 'black'
       c.fillText("YOU WIN", canvas.width / 2 - 300, canvas.height / 2)
       return
-    }
-    if (gamespeed > 0) {
-      createEnemies()
     }
     for (let i in buttons) {
       let foundButton = false

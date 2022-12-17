@@ -25,6 +25,7 @@ io.on('connection', client => {
   client.on('mousemove', handleMouseMove);
   client.on('towerBought', handleTowerBought);
   client.on('sellTower', handleSellTower);
+  client.on('gamespeedchange', handleGameSpeedChange)
 
   function handleJoinGame(roomName) {
     const room = io.sockets.adapter.rooms[roomName];
@@ -70,6 +71,19 @@ io.on('connection', client => {
     client.emit('init', 1);
   }
 
+  function handleGameSpeedChange(gamespeed) {
+    let roomName = clientRooms[client.id];
+      if (gamespeed.previousgamespeed == 1 && gamespeed.gamespeed == 2) {
+        state[roomName].gamespeed = 2
+        state[roomName].enemiesCooldown /= 2
+      } else if (gamespeed.previousgamespeed == 2 && gamespeed.gamespeed == 1) {
+        state[roomName].gamespeed = 1
+        state[roomName].enemiesCooldown *= 2
+      } else if (gamespeed.previousgamespeed == 0 && gamespeed.gamespeed == 1) {
+        state[roomName].gamespeed = 1
+      }
+  }
+
   function handleTowerBought(tower) {
     let roomName = clientRooms[client.id];
     state[roomName].towers.push(tower)
@@ -82,7 +96,8 @@ io.on('connection', client => {
     state[roomName].players[info.playerNumber - 1].mousepos.y = info.y
     }
     catch(err) {
-      console.log(`Room ${roomName} seems to be closed`)
+      //console.log(state[roomName].players)
+      //console.log(err)
     }
   }
 
@@ -152,14 +167,9 @@ io.on('connection', client => {
 
 function startGameInterval(roomName) {
   const intervalId = setInterval(() => {
-    const gameOver = gameLoop(state[roomName]);
-    if (!gameOver) {
+    let tempState = state[roomName]
+    state[roomName] = gameLoop(tempState);
       emitGameState(roomName, state[roomName])
-    } else {
-      emitGameOver(roomName, gameOver);
-      state[roomName] = null;
-      clearInterval(intervalId);
-    }
   }, 1000 / FRAME_RATE);
 }
 
