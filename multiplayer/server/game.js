@@ -45,7 +45,7 @@ class Enemy {
     const xDistance = waypoint.x - this.center.x
     const angle = Math.atan2(yDistance, xDistance)
 
-    const speed = 3 * gameState.gamespeed
+    const speed = 3 * gameState.gamespeed * deltaTime
 
     if (this.stun <= 0) {
     this.velocity.x = Math.cos(angle) * speed
@@ -54,7 +54,7 @@ class Enemy {
     this.position.x += this.velocity.x
     this.position.y += this.velocity.y
     } else {
-      this.stun -= gameState.gamespeed
+      this.stun -= gameState.gamespeed * deltaTime
     }
 
     this.center = {
@@ -110,7 +110,7 @@ class Tower {
     //this.draw()
 
     if (this.projectileCooldown <= 0 && gameState.enemies.length > 0) {
-      this.projectileCooldown += this.speed / gameState.gamespeed
+      this.projectileCooldown += this.speed
       for (let i in gameState.enemies) {
         let enemy = gameState.enemies[i]
         if ((this.range >= distance(this.position.x, this.position.y, enemy.position.x, enemy.position.y)) || (this.range >= distance(this.position.x, this.position.y, enemy.position.x, enemy.position.y + enemy.height)) || (this.range >= distance(this.position.x, this.position.y, enemy.position.x + enemy.width, enemy.position.y)) || (this.range >= distance(this.position.x, this.position.y, enemy.position.x + enemy.width, enemy.position.y + enemy.height))) {
@@ -131,7 +131,7 @@ class Tower {
         }
       }
     } else {
-      this.projectileCooldown -= 1 * gameState.gamespeed
+      this.projectileCooldown -= 1 * gameState.gamespeed * deltaTime
     }
   }
 }
@@ -177,9 +177,9 @@ class projectile {
     //this.draw()
 
     if (this.type == 2) {
-      this.speed = 50 * gameState.gamespeed
+      this.speed = 50 * gameState.gamespeed * deltaTime
     } else {
-      this.speed = 20 * gameState.gamespeed
+      this.speed = 20 * gameState.gamespeed * deltaTime
     }
 
     if ((this.type == 2 && gameState.upgrades[2][6] == 1) || (this.type == 4)) {
@@ -255,15 +255,15 @@ class projectile {
 }
 
 function createEnemies() {
-  if (gameState.enemies.length < 1000 && gameState.enemiesCooldown <= 0) {
+  if (gameState.enemiesCooldown <= 0) {
     if (!gameState.roundWaiting) {
       gameState.enemies.push(new Enemy({ position: { x: -100, y: 270 }, health: gameState.rounds[gameState.round][gameState.roundIndex] * Math.ceil(gameState.round * 0.2) }))
       gameState.roundIndex += 1
       if (gameState.roundIndex + 1 > gameState.rounds[gameState.round].length) {
         gameState.roundIndex = 0
-        roundWaiting = true
+        gameState.roundWaiting = true
       }
-      gameState.enemiesCooldown += 50 / gameState.gamespeed
+      gameState.enemiesCooldown += 50
     } else if (gameState.enemies.length == 0) {
       gameState.round += 1
       gameState.money += 100
@@ -279,10 +279,51 @@ function createEnemies() {
         gameState.gamespeed = 0
         gameState.projectiles = []
     }
-  } else if (gameState.enemiesCooldown > 0) {
-    gameState.enemiesCooldown -= 1
+  }
+ } else if (gameState.enemiesCooldown > 0) {
+    gameState.enemiesCooldown -= gameState.gamespeed * deltaTime
   }
 }
+
+function distance(x, y, x2, y2) {
+  return Math.sqrt((x - x2) ** 2 + (y - y2) ** 2)
+}
+
+function isColliding(x, y, w, h, x2, y2, w2, h2) {
+  if ((((x <= x2) && ((x + w) >= (x2 + w2))) || ((x >= x2) && (x <= (x2 + w2)) || (((x + w) >= x2) && ((x + w) <= (x2 + w2))))) && (((y >= y2) && (y <= (y2 + h2)) || (((y + h) >= y2) && ((y + h) <= (y2 + h2)))) || ((y <= y2) && ((y + h) >= (y2 + h2))))) {
+    return true
+  } else if (((x <= x2) && ((x + w) >= (x2 + w2))) && ((y <= y2) && ((y + h) >= (y2 + h2)))) {
+    return true
+  } else {
+    return false
+  }
+}
+
+function lineLineIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
+
+  // calculate the distance to intersection point
+  let uA = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
+  let uB = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
+
+  // if uA and uB are between 0-1, lines are colliding
+  if (uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1) {
+
+    // where the lines meet
+    let intersectionX = x1 + (uA * (x2-x1));
+    let intersectionY = y1 + (uA * (y2-y1));
+
+    return true;
+  }
+  return false;
+}
+
+function rectLineIntersection(rx, ry, rw, rh, lx1, ly1, lx2, ly2) {
+  let intersecting = false
+  if (lineLineIntersection(lx1, ly1, lx2, ly2, rx, ry, rx, ry + rh) || lineLineIntersection(lx1, ly1, lx2, ly2, rx, ry + rh, rx + rw, ry + rh) || lineLineIntersection(lx1, ly1, lx2, ly2, rx + rw, ry + rh, rx + rw, ry) || lineLineIntersection(lx1, ly1, lx2, ly2, rx, ry, rx + rw, ry)) {
+    intersecting = true
+  }
+  return intersecting
+
 }
 
 function createGameState() {
@@ -294,6 +335,7 @@ function createGameState() {
     roundIndex: 0,
     roundWaiting: false,
     towers: [],
+    tempTowers: [],
     projectiles: [],
     enemies: [],
     lives: 100,
@@ -326,24 +368,35 @@ function gameLoop(state) {
   if (!state) {
     return;
   }
-  deltaTime = (new Date().getTime() - lastFrameTimeStamp)/1000;
+  gameState = state
+  deltaTime = (new Date().getTime() - lastFrameTimeStamp)/20;
   lastFrameTimeStamp = new Date().getTime()
 
-  gameState = state
+  for (let i in gameState.tempTowers) {
+    gameState.towers.push(new Tower(gameState.tempTowers[i]))
+    gameState.tempTowers.splice(i, 1)
+  }
+
   for (let i in gameState.towers) {
-    let tower = new Tower(gameState.towers[i])
-    tower.update
+    let tower = gameState.towers[i]
+    tower.update()
     gameState.towers[i] = tower
   }
   for (let i in gameState.projectiles) {
     let projectile = gameState.projectiles[i]
-    projectile.update()
+    if (projectile.update()) {
+      gameState.projectiles.splice(i, 1)
+    } else {
     gameState.projectiles[i] = projectile
+    }
   }
   for (let i in gameState.enemies) {
     let enemy = gameState.enemies[i]
-    enemy.update()
+    if (enemy.update()) {
+      gameState.enemies.splice(i, 1)
+    } else {
     gameState.enemies[i] = enemy
+    }
   }
 
   if (gameState.gamespeed > 0) {

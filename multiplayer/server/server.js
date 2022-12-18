@@ -86,7 +86,7 @@ io.on('connection', client => {
 
   function handleTowerBought(tower) {
     let roomName = clientRooms[client.id];
-    state[roomName].towers.push(tower)
+    state[roomName].tempTowers.push(tower)
     state[roomName].money -= state[roomName].towerCosts[tower.type]
 
   }

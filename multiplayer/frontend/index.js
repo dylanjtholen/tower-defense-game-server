@@ -776,7 +776,8 @@ function drawGame(state) {
     if (gameState.projectiles.length > 0) {
       for (let i = 0; i < gameState.projectiles.length; i++) {
         let projectile = gameState.projectiles[i]
-        projectile.draw()
+        c.fillStyle = 'orange'
+        c.fillRect(projectile.center.x - projectile.height, projectile.center.y - projectile.width, projectile.width, projectile.height)
       }
     }
     
