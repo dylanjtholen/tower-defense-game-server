@@ -8,7 +8,7 @@ let canvas = document.getElementById('canvas');
 let c;
 let map;
 let upgradesImage;
-let bound = canvas.getBoundingClientRect();
+let bound
 
 let gameState
 
@@ -22,6 +22,7 @@ let mousey
 
 let speedButton
 let startbutton
+let autostartbutton
 const waypoints = [{ x: 0, y: 270 }, { x: 300, y: 270 }, { x: 300, y: 50 }, { x: 75, y: 50 }, { x: 75, y: 585 }, { x: 300, y: 585 }, { x: 300, y: 360 }, { x: 525, y: 360 }, { x: 525, y: 485 }, { x: 680, y: 485 }, { x: 680, y: 170 }, { x: 430, y: 170 }, { x: 430, y: 80 }, { x: 840, y: 80 }, { x: 840, y: 325 }, { x: 1000, y: 325 }]
 const collisionRectangles = [{ x: 960, y: 0, w: 100, h: 1060 }, { x: 0, y: 230, w: 350, h: 80 }, { x: 255, y: 10, w: 100, h: 300 }, { x: 35, y: 5, w: 315, h: 85 }, { x: 30, y: 5, w: 95, h: 625 }, { x: 30, y: 550, w: 325, h: 85 }, { x: 255, y: 325, w: 100, h: 305 }, { x: 260, y: 330, w: 315, h: 80 }, { x: 475, y: 330, w: 105, h: 207 }, { x: 475, y: 455, w: 260, h: 80 }, { x: 635, y: 135, w: 100, h: 405 }, { x: 385, y: 135, w: 350, h: 85 }, { x: 385, y: 35, w: 95, h: 180 }, { x: 385, y: 40, w: 510, h: 85 }, { x: 800, y: 40, w: 95, h: 340 }, { x: 800, y: 290, w: 160, h: 85 }]
 let buttons = []
@@ -47,9 +48,7 @@ let placingTower = 0
 let inUpgradesScreen = false
 let upgradeButtons = []
 
-//var firebug=document.createElement('script');firebug.setAttribute('src','https://luphoria.com/fbl/fbl/firebug-lite-debug.js');document.body.appendChild(firebug);(function(){if(window.firebug.version){firebug.init();}else{setTimeout(arguments.callee);}})();void(firebug);
-
-const socket = io('localhost:3000');
+const socket = io('https://3000-dylanjthole-towerdefens-d8jp7sebuhk.ws-us79.gitpod.io/');
 
 socket.on('init', handleInit);
 socket.on('gameState', handleGameState);
@@ -63,6 +62,7 @@ const initialScreen = document.getElementById('initialScreen');
 const newGameBtn = document.getElementById('newGameButton');
 const joinGameBtn = document.getElementById('joinGameButton');
 const gameCodeInput = document.getElementById('gameCodeInput');
+const usernameInput = document.getElementById('usernameInput');
 const gameCodeDisplay = document.getElementById('gameCodeDisplay');
 
 newGameBtn.addEventListener('click', newGame);
@@ -446,8 +446,8 @@ class UpgradeButton {
 
 canvas.addEventListener('mousemove', function () {
   let pos = findPos(canvas)
-  mousex = event.pageX - pos.x
-  mousey = event.pageY - pos.y
+  mousex = event.pageX - ((window.innerWidth - (canvas.width - 100)) / 100) * -40.57
+  mousey = event.pageY - (window.innerHeight - canvas.height) / 2
   socket.emit('mousemove', {x: mousex, y: mousey, playerNumber: playerNumber})
 })
 canvas.addEventListener('mousedown', function () {
@@ -502,13 +502,14 @@ canvas.addEventListener('mousedown', function () {
 })
 
 function newGame() {
-  socket.emit('newGame');
+  socket.emit('newGame', usernameInput.value);
   init();
 }
 
 function joinGame() {
   const code = gameCodeInput.value;
-  socket.emit('joinGame', code);
+  gameCodeDisplay.innerText = code;
+  socket.emit('joinGame', {roomName: code, username: usernameInput.value});
   init();
 }
 
@@ -525,15 +526,20 @@ function init() {
 
   c.fillStyle = 'black';
   c.fillRect(0, 0, canvas.width, canvas.height);
+  bound = canvas.getBoundingClientRect();
+
+  document.getElementById('stylesheet').setAttribute('href', 'style.css')
+  document.getElementById('stylesheet').removeAttribute('integrity')
+  document.getElementById('stylesheet').removeAttribute('crossorigin')
 
   startbutton = new Button({ x: 960, y: 540, w: 100, h: 100, color: 'red', text: 'start', hovercolor: 'blue', pressedcolor: 'green', pressedfunction: startbuttonpressed })
   speedButton = new Button({ x: 960, y: 540, w: 100, h: 100, color: 'red', text: 'fast', hovercolor: 'blue', pressedcolor: 'green', pressedfunction: changeSpeed })
-var autostartbutton = new Button({ x: 960, y: 500, w: 100, h: 40, color: 'lime', text: 'autostart: off', hovercolor: 'green', pressedcolor: 'blue', pressedfunction: toggleAutoStart })
+autostartbutton = new Button({ x: 960, y: 500, w: 100, h: 40, color: 'lime', text: 'autostart: off', hovercolor: 'green', pressedcolor: 'blue', pressedfunction: toggleAutoStart })
 var tower1button = new Button({ x: 960, y: 0, w: 100, h: 100, color: 'lime', text: towerNames[1], hovercolor: 'green', pressedcolor: 'blue', pressedfunction: placetower1 })
 var tower2button = new Button({ x: 960, y: 100, w: 100, h: 100, color: 'lime', text: towerNames[2], hovercolor: 'green', pressedcolor: 'blue', pressedfunction: placetower2 })
 var tower3button = new Button({ x: 960, y: 200, w: 100, h: 100, color: 'lime', text: towerNames[3], hovercolor: 'green', pressedcolor: 'blue', pressedfunction: placetower3 })
 var tower4button = new Button({ x: 960, y: 300, w: 100, h: 100, color: 'lime', text: towerNames[4], hovercolor: 'green', pressedcolor: 'blue', pressedfunction: placetower4 })
-var upgradesbutton = new Button({ x: 960, y: 400, w: 100, h: 100, color: 'lime', text: 'gameState.upgrades', hovercolor: 'green', pressedcolor: 'blue', pressedfunction: toggleUpgrades })
+var upgradesbutton = new Button({ x: 960, y: 400, w: 100, h: 100, color: 'lime', text: 'upgrades', hovercolor: 'green', pressedcolor: 'blue', pressedfunction: toggleUpgrades })
 buttons.push(startbutton)
 buttons.push(autostartbutton)
 buttons.push(tower1button)
@@ -657,11 +663,11 @@ function findPos(obj) {
   
   function changeSpeed() {
     if (gamespeed == 1) {
-      gamespeed = 2
+      socket.emit('gamespeedchange', {gamespeed: 2, previousgamespeed: gamespeed})
       speedButton.text = 'slow'
       enemiesCooldown /= 2
     } else {
-      gamespeed = 1
+      socket.emit('gamespeedchange', {gamespeed: 1, previousgamespeed: gamespeed})
       speedButton.text = 'fast'
       enemiesCooldown *= 2
     }
@@ -669,10 +675,10 @@ function findPos(obj) {
   
   function toggleAutoStart() {
     if (autostart) {
-      autostart = false
+      socket.emit('autoStartToggle', false)
       autostartbutton.text = 'autostart: off'
     } else {
-      autostart = true
+      socket.emit('autoStartToggle', true)
       autostartbutton.text = 'autostart: on'
     }
   }
@@ -753,6 +759,47 @@ function drawGame(state) {
   money = state.money
   lives = state.lives
   round = state.round
+  autostart = state.autostart
+
+    let startButtonFound = false
+    let speedButtonFound = false
+    let startButtonIndex = -1
+    let speedButtonIndex = -1
+    for (let i in buttons) {
+      if (buttons[i] === startbutton) {
+        startButtonFound = true
+        startButtonIndex = i
+      }
+      if (buttons[i] === speedButton) {
+        speedButtonFound = true
+        speedButtonIndex = i
+      }
+  }
+
+  if (speedButtonFound && gamespeed == 0) {
+    buttons.splice(speedButtonIndex, 1)
+  }
+  if (startButtonFound && gamespeed != 0) {
+    buttons.splice(startButtonIndex, 1)
+  }
+  if (!startButtonFound && gamespeed == 0) {
+    buttons.push(startbutton)
+  }
+  if (!speedButtonFound && gamespeed != 0) {
+    buttons.push(speedButton)
+  }
+  if (gamespeed == 1) {
+    speedButton.text = 'fast'
+  } else {
+    speedButton.text = 'slow'
+  }
+
+  if (!autostart) {
+    autostartbutton.text = 'autostart: off'
+  } else {
+    autostartbutton.text = 'autostart: on'
+  }
+
     c.clearRect(0, 0, canvas.width, canvas.height);
     if (!inUpgradesScreen) {
     c.fillStyle = 'red'
@@ -882,6 +929,16 @@ function handleInit(number) {
 
 function handleGameState(gameState) {
   if (!gameActive) {
+  return
+  }
+  gameState = JSON.parse(gameState);
+  if (!gameState.gameStarted) {
+    let playersList = ''
+    for (let i in gameState.players) {
+      let player = gameState.players[i]
+      playersList += `<p>${player.username}</p>`
+    }
+    document.getElementById('playersDiv').innerHTML = playersList
     return;
   }
   gameState = JSON.parse(gameState);

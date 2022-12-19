@@ -26,8 +26,9 @@ io.on('connection', client => {
   client.on('towerBought', handleTowerBought);
   client.on('sellTower', handleSellTower);
   client.on('gamespeedchange', handleGameSpeedChange)
+  client.on('autoStartToggle', handleAutoStart)
 
-  function handleJoinGame(roomName) {
+  function handleJoinGame({roomName, username}) {
     const room = io.sockets.adapter.rooms[roomName];
 
     let allUsers;
@@ -51,24 +52,28 @@ io.on('connection', client => {
     clientRooms[client.id] = roomName;
 
     client.join(roomName);
+    state[roomName].players.push({username: username, mousepos: {x: 0, y: 0}, placingTower: 0})
     client.number = 2;
     client.emit('init', 2);
-    startGameInterval(roomName);
-    console.log('started game: ' + roomName)
       }
 
-  function handleNewGame() {
-    console.log('making new game')
+  function handleNewGame(username) {
     let roomName = makeid(5);
-    console.log(`game code is: ${roomName}`)
     clientRooms[client.id] = roomName;
     client.emit('gameCode', roomName);
 
     state[roomName] = initGame();
+    state[roomName].players.push({username: username, mousepos: {x: 0, y: 0}, placingTower: 0})
 
     client.join(roomName);
     client.number = 1;
     client.emit('init', 1);
+    startGameInterval(roomName);
+  }
+
+  function handleAutoStart(autostart) {
+    let roomName = clientRooms[client.id];
+    state[roomName].autostart = autostart
   }
 
   function handleGameSpeedChange(gamespeed) {
