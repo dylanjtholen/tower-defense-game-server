@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Tower defense</title>
+  <title>Multiplayer</title>
   <!--<script src="https://kylemit.github.io/firebug-console/firebug-lite-debug.js"></script>-->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous" id="stylesheet">
   
@@ -18,29 +18,53 @@
 
       <div id="initialScreen" class="h-100">
         <div class="d-flex flex-column align-items-center justify-content-center h-100">
-            <h1>Tower defense</h1>
+            <h1>Multiplayer</h1>
+            <div class="form-group">
+              <input type="text" placeholder="Enter Username" id="usernameInput"/>
+            </div>
             <p></p>
-            <form action="singleplayer/index.html">
             <button
               type="submit"
               class="btn btn-success"
               id="newGameButton"
             >
-              Singleplayer
+              Create New Game
             </button>
-            </form>
             <div>OR</div>
-            <form action="multiplayer/frontend/index.html">
+            <div class="form-group">
+              <input type="text" placeholder="Enter Game Code" id="gameCodeInput"/>
+            </div>
             <button
               type="submit"
               class="btn btn-success"
               id="joinGameButton"
             >
-              Multiplayer
+              Join Game
             </button>
-        </form>
         </div>
       </div>
+
+      <div id="gameScreen" class="h-100">
+        <div class="d-flex flex-column align-items-center justify-content-center h-100">
+          <div class="sidebar" id="sidebarcontainer">
+          <h1 class="sidebar">Your game code is: </h1>
+          <b><span id="gameCodeDisplay" class="sidebar"></span></b>
+          <button type="submit" class="btn btn-success" id="copyButton">Copy</button>
+          <p></p>
+          <button
+              type="submit"
+              class="btn btn-success"
+              id="startGameButton"
+            >
+              Start game
+            </button>
+          <p class="sidebar">Players:</p>
+          <div id="playersDiv"></div>
+          </div>
+        </div>
+        <canvas id="canvas"></canvas>
+      </div>
+
     </div>
   </section>
 
