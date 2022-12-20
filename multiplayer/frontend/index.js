@@ -48,7 +48,7 @@ let placingTower = 0
 let inUpgradesScreen = false
 let upgradeButtons = []
 
-const socket = io('https://3000-dylanjthole-towerdefens-d8jp7sebuhk.ws-us79.gitpod.io/');
+const socket = io('localhost:3000');
 
 socket.on('init', handleInit);
 socket.on('gameState', handleGameState);
@@ -61,12 +61,14 @@ const gameScreen = document.getElementById('gameScreen');
 const initialScreen = document.getElementById('initialScreen');
 const newGameBtn = document.getElementById('newGameButton');
 const joinGameBtn = document.getElementById('joinGameButton');
+const startGameBtn = document.getElementById('startGameButton');
 const gameCodeInput = document.getElementById('gameCodeInput');
 const usernameInput = document.getElementById('usernameInput');
 const gameCodeDisplay = document.getElementById('gameCodeDisplay');
 
 newGameBtn.addEventListener('click', newGame);
 joinGameBtn.addEventListener('click', joinGame);
+startGameBtn.addEventListener('click', startGame)
 
 class Button {
   constructor({ x = 0, y = 0, w = 0, h = 0, color = 'red', text = '', pressedcolor = 'green', hovercolor = 'blue', pressedfunction = 'null' }) {
@@ -446,11 +448,12 @@ class UpgradeButton {
 
 canvas.addEventListener('mousemove', function () {
   let pos = findPos(canvas)
-  mousex = event.pageX - ((window.innerWidth - (canvas.width - 100)) / 100) * -40.57
-  mousey = event.pageY - (window.innerHeight - canvas.height) / 2
+  mousex = event.clientX - (window.innerWidth - canvas.width) / 2
+  mousey = event.clientY - (window.innerHeight - canvas.height) / 2
   socket.emit('mousemove', {x: mousex, y: mousey, playerNumber: playerNumber})
 })
 canvas.addEventListener('mousedown', function () {
+  alert(`${mousex}, ${mousey}`)
   mouseDown = true
   if (!inUpgradesScreen) {
   for (let i = 0; i < buttons.length; i++) {
@@ -509,8 +512,14 @@ function newGame() {
 function joinGame() {
   const code = gameCodeInput.value;
   gameCodeDisplay.innerText = code;
+  startGameBtn.remove()
   socket.emit('joinGame', {roomName: code, username: usernameInput.value});
   init();
+}
+
+function startGame() {
+  socket.emit('startGame')
+  startGameBtn.remove()
 }
 
 function init() {
@@ -524,7 +533,7 @@ function init() {
   canvas.width = 1060;
   canvas.height = 640;
 
-  c.fillStyle = 'black';
+  c.fillStyle = 'gray';
   c.fillRect(0, 0, canvas.width, canvas.height);
   bound = canvas.getBoundingClientRect();
 
@@ -927,11 +936,11 @@ function handleInit(number) {
   playerNumber = number;
 }
 
-function handleGameState(gameState) {
+function handleGameState(state) {
   if (!gameActive) {
   return
   }
-  gameState = JSON.parse(gameState);
+  gameState = JSON.parse(state);
   if (!gameState.gameStarted) {
     let playersList = ''
     for (let i in gameState.players) {
@@ -941,7 +950,6 @@ function handleGameState(gameState) {
     document.getElementById('playersDiv').innerHTML = playersList
     return;
   }
-  gameState = JSON.parse(gameState);
   requestAnimationFrame(() => drawGame(gameState));
 }
 

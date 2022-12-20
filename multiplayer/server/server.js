@@ -27,6 +27,7 @@ io.on('connection', client => {
   client.on('sellTower', handleSellTower);
   client.on('gamespeedchange', handleGameSpeedChange)
   client.on('autoStartToggle', handleAutoStart)
+  client.on('startGame', handleStartGame)
 
   function handleJoinGame({roomName, username}) {
     const room = io.sockets.adapter.rooms[roomName];
@@ -87,6 +88,11 @@ io.on('connection', client => {
       } else if (gamespeed.previousgamespeed == 0 && gamespeed.gamespeed == 1) {
         state[roomName].gamespeed = 1
       }
+  }
+
+  function handleStartGame() {
+    let roomName = clientRooms[client.id]
+    state[roomName].gameStarted = true
   }
 
   function handleTowerBought(tower) {

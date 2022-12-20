@@ -4,10 +4,10 @@ body {
 }
 canvas {
     display: block;
-  position: absolute;
-  left: 50%;
+    position: absolute;
+    left: 50%;
     top: 50%;
-    transform: translate(-40.57%, -50%);
+    transform: translate(-50%, -50%);
 }
 .sidebar {
     font-family: sans-serif;
@@ -18,10 +18,13 @@ canvas {
 #sidebarcontainer {
     border-width: 5px;
     border-style: solid;
+    position: absolute;
     border-color: rgb(40, 40, 40);
-    top: 50%;
     height: 640px;
     width: 1275px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-58.4%, -50%);
     
 }
 
