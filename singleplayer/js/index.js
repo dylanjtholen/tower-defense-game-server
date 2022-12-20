@@ -44,7 +44,7 @@ var placingTower = 0
 var inUpgradesScreen = false
 var upgradeButtons = []
 
-var devmode = true
+var devmode = false
 
 /*
 Python code for generating rounds
