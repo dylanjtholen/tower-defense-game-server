@@ -216,7 +216,6 @@ class projectile {
     for (let i = 0; i < gameState.enemies.length; i++) {
       let enemy = gameState.enemies[i]
       if (isColliding(this.position.x, this.position.y, this.width, this.height, enemy.position.x, enemy.position.y, enemy.width, enemy.height) || rectLineIntersection(enemy.position.x, enemy.position.y, enemy.width, enemy.height, this.position.x, this.position.y, this.oldpositon.x, this.oldpositon.y)) {
-        console.log(gameState.players[this.owner - 1])
         if (gameState.enemies[i].health < this.damage) {
           gameState.players[this.owner - 1].money += gameState.enemies[i].health
           this.damage -= gameState.enemies[i].health
