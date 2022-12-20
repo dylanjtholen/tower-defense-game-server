@@ -900,7 +900,7 @@ canvas.addEventListener('mousedown', function () {
   if (placingTower > 0 && (validPlacement(mousex - towerSizes[placingTower], mousey - towerSizes[placingTower], towerSizes[placingTower] * 2, towerSizes[placingTower] * 2) && (money >= towerCosts[placingTower] || devmode))) {
     money -= towerCosts[placingTower] * !devmode
     let temptower = new tower({ position: { x: mousex, y: mousey }, type: placingTower })
-    
+    towers.push(temptower)
     var tempButton = new Button({ x: mousex - towerSizes[placingTower], y: mousey - towerSizes[placingTower], w: towerSizes[placingTower] * 2, h: towerSizes[placingTower] * 2, color: 'lime', pressedcolor: 'lime', hovercolor: 'lime', text: '', pressedfunction: '' })
     tempButton.towerToSell = towers[towers.length - 1]
     tempButton.buttonToSell = tempButton
