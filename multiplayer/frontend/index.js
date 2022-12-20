@@ -48,7 +48,7 @@ let placingTower = 0
 let inUpgradesScreen = false
 let upgradeButtons = []
 
-const socket = io('https://3000-dylanjthole-towerdefens-d8jp7sebuhk.ws-us79.gitpod.io');
+const socket = io('https://tower-defense-multiplayer.onrender.com/');
 
 socket.on('init', handleInit);
 socket.on('gameState', handleGameState);
