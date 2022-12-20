@@ -48,7 +48,7 @@ let placingTower = 0
 let inUpgradesScreen = false
 let upgradeButtons = []
 
-const socket = io('localhost:3000');
+const socket = io('https://3000-dylanjthole-towerdefens-d8jp7sebuhk.ws-us79.gitpod.io');
 
 socket.on('init', handleInit);
 socket.on('gameState', handleGameState);
@@ -56,6 +56,9 @@ socket.on('gameOver', handleGameOver);
 socket.on('gameCode', handleGameCode);
 socket.on('unknownCode', handleUnknownCode);
 socket.on('tooManyPlayers', handleTooManyPlayers);
+socket.on('gameAlreadyStarted', handleGameAlreadyStarted)
+socket.on('usernameTooLong', handleUsernameTooLong);
+socket.on('noUsername', handleNoUsername)
 
 const gameScreen = document.getElementById('gameScreen');
 const initialScreen = document.getElementById('initialScreen');
@@ -65,10 +68,12 @@ const startGameBtn = document.getElementById('startGameButton');
 const gameCodeInput = document.getElementById('gameCodeInput');
 const usernameInput = document.getElementById('usernameInput');
 const gameCodeDisplay = document.getElementById('gameCodeDisplay');
+const copyCodeBtn = document.getElementById('copyButton');
 
 newGameBtn.addEventListener('click', newGame);
 joinGameBtn.addEventListener('click', joinGame);
 startGameBtn.addEventListener('click', startGame)
+copyCodeBtn.addEventListener('click', copyGameCode)
 
 class Button {
   constructor({ x = 0, y = 0, w = 0, h = 0, color = 'red', text = '', pressedcolor = 'green', hovercolor = 'blue', pressedfunction = 'null' }) {
@@ -125,7 +130,7 @@ class Button {
       tempButton.towerToSell = this.towerToSell
       tempButton.buttonToSell = this.buttonToSell
       tempButton.pressedfunction = sell
-      socket.emit('sellTower', selltower)
+      buttons.push(tempButton)
     } else {
       setTimeout(this.pressedfunction, 0)
     }
@@ -202,8 +207,9 @@ class Enemy {
 }
 
 class tower {
-  constructor({ position = { x: 0, y: 0 }, type = 1 }) {
+  constructor({ position = { x: 0, y: 0 }, type = 1 , owner = -1}) {
     this.type = type
+    this.owner = owner
     this.damage = gameState.towerDamage[this.type]
     this.range = gameState.towerRanges[this.type]
     this.speed = gameState.towerSpeeds[this.type]
@@ -448,12 +454,11 @@ class UpgradeButton {
 
 canvas.addEventListener('mousemove', function () {
   let pos = findPos(canvas)
-  mousex = event.clientX - (window.innerWidth - canvas.width) / 2
+  mousex = event.clientX - (((window.innerWidth - canvas.width) / 2) + (canvas.width / 10))
   mousey = event.clientY - (window.innerHeight - canvas.height) / 2
   socket.emit('mousemove', {x: mousex, y: mousey, playerNumber: playerNumber})
 })
 canvas.addEventListener('mousedown', function () {
-  alert(`${mousex}, ${mousey}`)
   mouseDown = true
   if (!inUpgradesScreen) {
   for (let i = 0; i < buttons.length; i++) {
@@ -477,10 +482,10 @@ canvas.addEventListener('mousedown', function () {
   }
   if (placingTower > 0 && (validPlacement(mousex - gameState.towerSizes[placingTower], mousey - gameState.towerSizes[placingTower], gameState.towerSizes[placingTower] * 2, gameState.towerSizes[placingTower] * 2) && (money >= gameState.towerCosts[placingTower]))) {
     money -= gameState.towerCosts[placingTower]
-    let temptower = new tower({ position: { x: mousex, y: mousey }, type: placingTower })
-    socket.emit('towerBought', temptower)
+    let temptower = new tower({ position: { x: mousex, y: mousey }, type: placingTower, owner: playerNumber })
+    socket.emit('towerBought', temptower, playerNumber)
     var tempButton = new Button({ x: mousex - gameState.towerSizes[placingTower], y: mousey - gameState.towerSizes[placingTower], w: gameState.towerSizes[placingTower] * 2, h: gameState.towerSizes[placingTower] * 2, color: 'lime', pressedcolor: 'lime', hovercolor: 'lime', text: '', pressedfunction: '' })
-    tempButton.towerToSell = gameState.towers[gameState.towers.length - 1]
+    tempButton.towerToSell = temptower
     tempButton.buttonToSell = tempButton
     tempButton.pressedfunction = 'makesellbutton'
     buttons.push(tempButton)
@@ -725,10 +730,10 @@ function findPos(obj) {
   }
   
   function sell(selltower, sellbutton) {
+    socket.emit('sellTower', selltower, playerNumber)
     for (let i in gameState.towers) {
       if (gameState.towers[i] === selltower) {
-        money += gameState.towerCosts[selltower.type] / 2
-        socket.emit('sellTower', selltower)
+
         break
       }
     }
@@ -762,14 +767,17 @@ function keydown(e) {
   socket.emit('keydown', e.keyCode);
 }
 
+function copyGameCode() {
+  navigator.clipboard.writeText(gameCodeDisplay.innerText)
+}
+
 function drawGame(state) {
   gameState = state
   gamespeed = state.gamespeed
-  money = state.money
+  money = state.players[playerNumber - 1].money
   lives = state.lives
   round = state.round
   autostart = state.autostart
-
     let startButtonFound = false
     let speedButtonFound = false
     let startButtonIndex = -1
@@ -808,7 +816,6 @@ function drawGame(state) {
   } else {
     autostartbutton.text = 'autostart: on'
   }
-
     c.clearRect(0, 0, canvas.width, canvas.height);
     if (!inUpgradesScreen) {
     c.fillStyle = 'red'
@@ -940,14 +947,14 @@ function handleGameState(state) {
   if (!gameActive) {
   return
   }
-  gameState = JSON.parse(state);
-  if (!gameState.gameStarted) {
-    let playersList = ''
+  let gameState = JSON.parse(state);
+  let playersList = ''
     for (let i in gameState.players) {
       let player = gameState.players[i]
       playersList += `<p>${player.username}</p>`
     }
     document.getElementById('playersDiv').innerHTML = playersList
+  if (!gameState.gameStarted) {
     return;
   }
   requestAnimationFrame(() => drawGame(gameState));
@@ -973,7 +980,22 @@ function handleUnknownCode() {
 
 function handleTooManyPlayers() {
   reset();
-  alert('This game is already in progress');
+  alert('This game is full');
+}
+
+function handleGameAlreadyStarted() {
+  reset();
+  alert('This game is already in progress')
+}
+
+function handleUsernameTooLong() {
+  reset();
+  alert('Username too long')
+}
+
+function handleNoUsername() {
+  reset();
+  alert('Invalid username')
 }
 
 function reset() {
@@ -981,4 +1003,5 @@ function reset() {
   gameCodeInput.value = '';
   initialScreen.style.display = "block";
   gameScreen.style.display = "none";
+  location.reload()
 }

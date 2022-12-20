@@ -19,6 +19,7 @@ function makeid(length) {
 
 io.on('connection', client => {
 
+  client.on("disconnecting", handleDisconnect);
   client.on('newGame', handleNewGame);
   client.on('joinGame', handleJoinGame);
   client.on('upgrade', handleUpgrade);
@@ -50,25 +51,75 @@ io.on('connection', client => {
       return;
     }
 
+    if (state[roomName].gameStarted) {
+      client.emit('gameAlreadyStarted')
+      return
+    }
+
+    if (username.length >= 15) {
+      client.emit('usernameTooLong')
+      return
+    }
+
+    if (!username) {
+      client.emit('noUsername')
+      return
+    }
+
     clientRooms[client.id] = roomName;
 
     client.join(roomName);
-    state[roomName].players.push({username: username, mousepos: {x: 0, y: 0}, placingTower: 0})
+    state[roomName].players.push({username: username, mousepos: {x: 0, y: 0}, placingTower: 0, money: 120, id: client.id})
     client.number = 2;
     client.emit('init', 2);
       }
+
+  function handleDisconnect() {
+    try {
+    let roomName = clientRooms[client.id]
+    let clientNumber
+    for (let i = state[roomName].players.length -1; i >= 0; i--) {
+      if (state[roomName].players[i].id == client.id) {
+        clientNumber = i
+        state[roomName].players.splice(clientNumber, 1)
+        break
+      }
+    }
+    for (let i = state[roomName].towers.length -1; i >= 0; i--) {
+      let tower = state[roomName].towers[i]
+      if (tower.owner - 1 == clientNumber) {
+        state[roomName].towers.splice(i, 1)
+      } else if (tower.owner == 0 && clientNumber == 0) {
+        state[roomName].towers.splice(i, 1)
+      }
+    }
+  } catch (err) {
+    console.log('error')
+  }
+  }
 
   function handleNewGame(username) {
     let roomName = makeid(5);
     clientRooms[client.id] = roomName;
     client.emit('gameCode', roomName);
 
+    if (username.length >= 15) {
+      client.emit('usernameTooLong')
+      return
+    }
+
+    if (!username) {
+      client.emit('noUsername')
+      return
+    }
+
     state[roomName] = initGame();
-    state[roomName].players.push({username: username, mousepos: {x: 0, y: 0}, placingTower: 0})
+    state[roomName].players.push({username: username, mousepos: {x: 0, y: 0}, placingTower: 0, money: 120, id: client.id})
 
     client.join(roomName);
     client.number = 1;
     client.emit('init', 1);
+    console.log('created room: ' + roomName)
     startGameInterval(roomName);
   }
 
@@ -95,10 +146,10 @@ io.on('connection', client => {
     state[roomName].gameStarted = true
   }
 
-  function handleTowerBought(tower) {
+  function handleTowerBought(tower, playerNumber) {
     let roomName = clientRooms[client.id];
     state[roomName].tempTowers.push(tower)
-    state[roomName].money -= state[roomName].towerCosts[tower.type]
+    state[roomName].players[playerNumber - 1].money -= state[roomName].towerCosts[tower.type]
 
   }
 
@@ -114,12 +165,13 @@ io.on('connection', client => {
     }
   }
 
-  function handleSellTower(towerToSell) {
+  function handleSellTower(towerToSell, playerNumber) {
     let roomName = clientRooms[client.id];
-    for (i in state[roomName].towers) {
+    for (let i in state[roomName].towers) {
       let tower = state[roomName].towers[i]
-      if (tower === towerToSell) {
+      if (tower.position.x == towerToSell.position.x && tower.position.y == towerToSell.position.y) {
         state[roomName].towers.splice(i, 1)
+        state[roomName].players[playerNumber - 1].money += state[roomName].towerCosts[towerToSell.type] / 2
       }
     }
   }
@@ -128,9 +180,9 @@ io.on('connection', client => {
     let roomName = clientRooms[client.id];
     let towerBeingUpgraded = upgradeInfo.towerBeingUpgraded
     let upgrade = upgradeInfo.upgrade
-    if (state[roomName].money >= upgradeCosts[towerBeingUpgraded][upgrade]) {
+    if (state[roomName].players[upgradeInfo.playerNumber - 1].money >= upgradeCosts[towerBeingUpgraded][upgrade]) {
         state[roomName].upgrades[towerBeingUpgraded][upgrade] = 1
-        state[roomName].money -= upgradeCosts[towerBeingUpgraded][upgrade]
+        state[roomName].players[upgradeInfo.playerNumber - 1].money -= upgradeCosts[towerBeingUpgraded][upgrade]
         //update damages
         if ((upgrade == 4 || upgrade == 5) && towerBeingUpgraded == 1) {
           state[roomName].towerDamage[1] += 2
