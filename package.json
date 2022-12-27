@@ -1,5 +1,23 @@
 {
-    "dependencies": {
-      "socket.io": "^2.3.0"
-    }
-  }
+  "dependencies": {
+    "socket.io": "^2.3.0"
+  },
+  "name": "tower-defense-game-server",
+  "version": "1.2.0",
+  "description": "The server for my tower defense game multiplayer version",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dylanjtholen/tower-defense-game-server.git"
+  },
+  "author": "Dylan J Tholen",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dylanjtholen/tower-defense-game-server/issues"
+  },
+  "homepage": "https://github.com/dylanjtholen/tower-defense-game-server#readme"
+}
