@@ -5,10 +5,11 @@
   "name": "tower-defense-game-server",
   "version": "1.2.0",
   "description": "The server for my tower defense game multiplayer version",
-  "main": "index.js",
+  "main": "server.js",
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js"
   },
   "repository": {
     "type": "git",
